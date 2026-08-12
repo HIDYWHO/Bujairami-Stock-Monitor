@@ -2,7 +2,7 @@ name: Bujairami Stock Monitor
 
 on:
   schedule:
-    - cron: '7,22,37,52 * * * *'   # every 15 min, offset off the hour
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'   # every 15 min, offset off the hour
   workflow_dispatch:                # manual "Run workflow" button for testing
 
 # Don't let a slow run overlap the next scheduled one (avoids git push races).
