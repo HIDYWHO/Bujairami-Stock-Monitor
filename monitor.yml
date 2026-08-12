@@ -1,0 +1,43 @@
+name: Bujairami Stock Monitor
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'   # every 15 min, offset off the hour
+  workflow_dispatch:                # manual "Run workflow" button for testing
+
+# Don't let a slow run overlap the next scheduled one (avoids git push races).
+concurrency:
+  group: bujairami-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write               # lets the job push the updated state + log
+    env:
+      TZ: America/Los_Angeles       # keep log timestamps in your local time
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor (single check)
+        env:
+          BUJAIRAMI_DISCORD_WEBHOOK: ${{ secrets.BUJAIRAMI_DISCORD_WEBHOOK }}
+        run: python bujairami_monitor.py --once
+
+      - name: Commit updated state and log
+        run: |
+          git config user.name "bujairami-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bujairami_state.json
+          [ -f bujairami_events.log ] && git add bujairami_events.log || true
+          [ -f bujairami_health.json ] && git add bujairami_health.json || true
+          git diff --staged --quiet || git commit -m "update state"
+          git push
