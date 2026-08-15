@@ -231,14 +231,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-breezy/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-sweet-escape|extrait de parfum": {
-    "id": "503978",
-    "slug": "bujairami-sweet-escape",
-    "name": "Bujairami Sweet Escape",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sweet-escape/extrait-de-parfum",
-    "in_stock": true
-  },
   "bujairami-the-hype|eau de parfum": {
     "id": "503980",
     "slug": "bujairami-the-hype",
@@ -358,6 +350,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-sasha/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-sweet-escape|extrait de parfum": {
+    "id": "503978",
+    "slug": "bujairami-sweet-escape",
+    "name": "Bujairami Sweet Escape",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sweet-escape/extrait-de-parfum",
+    "in_stock": false
   },
   "bujairami-short-cake|eau de parfum": {
     "id": "503973",
