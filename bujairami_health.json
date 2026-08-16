@@ -1,5 +1,5 @@
 {
-  "status": "down",
-  "fails": 7,
-  "last_alert": 1786890454.656858
+  "status": "ok",
+  "fails": 0,
+  "last_alert": 0
 }
