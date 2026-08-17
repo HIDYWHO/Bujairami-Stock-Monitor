@@ -295,14 +295,6 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-psycho/extrait-de-parfum",
     "in_stock": true
   },
-  "bujairami-red-static|eau de parfum": {
-    "id": "517188",
-    "slug": "bujairami-red-static",
-    "name": "Bujairami Red Static",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-sweet-escape|extrait de parfum": {
     "id": "503978",
     "slug": "bujairami-sweet-escape",
@@ -358,6 +350,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-sasha/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-red-static|eau de parfum": {
+    "id": "517188",
+    "slug": "bujairami-red-static",
+    "name": "Bujairami Red Static",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-short-cake|eau de parfum": {
     "id": "503973",
