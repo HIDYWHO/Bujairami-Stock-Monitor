@@ -72,12 +72,20 @@
     "in_stock": true
   },
   "bujairami-inferno|eau de parfum": {
-    "id": "524830",
+    "id": "503955",
     "slug": "bujairami-inferno",
     "name": "Bujairami Inferno",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-inferno/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-enforcer|eau de parfum": {
+    "id": "503948",
+    "slug": "bujairami-enforcer",
+    "name": "Bujairami Enforcer",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-enforcer/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-the-rock-intensely|eau de parfum": {
     "id": "503982",
@@ -94,6 +102,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-unforgettable/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-new-york|eau de parfum": {
+    "id": "503964",
+    "slug": "bujairami-new-york",
+    "name": "Bujairami New York",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-billionaires-club|eau de parfum": {
     "id": "503938",
@@ -119,14 +135,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-agha/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-enforcer|eau de parfum": {
-    "id": "503948",
-    "slug": "bujairami-enforcer",
-    "name": "Bujairami Enforcer",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-enforcer/eau-de-parfum",
-    "in_stock": false
-  },
   "bujairami-extra-pulse|eau de parfum": {
     "id": "503949",
     "slug": "bujairami-extra-pulse",
@@ -135,16 +143,8 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-extra-pulse/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-new-york|eau de parfum": {
-    "id": "503964",
-    "slug": "bujairami-new-york",
-    "name": "Bujairami New York",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
-    "in_stock": false
-  },
   "bujairami-fairy-dust|eau de parfum": {
-    "id": "524567",
+    "id": "530866",
     "slug": "bujairami-fairy-dust",
     "name": "Bujairami Fairy Dust",
     "concentration": "eau de parfum",
@@ -255,6 +255,14 @@
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-sugar-rush/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-ace|eau de parfum": {
+    "id": "503935",
+    "slug": "bujairami-ace",
+    "name": "Bujairami Ace",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ace/eau-de-parfum",
+    "in_stock": false
+  },
   "bujairami-gas|extrait de parfum": {
     "id": "517184",
     "slug": "bujairami-gas",
@@ -262,6 +270,14 @@
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-gas/extrait-de-parfum",
     "in_stock": true
+  },
+  "bujairami-power|eau de parfum": {
+    "id": "503968",
+    "slug": "bujairami-power",
+    "name": "Bujairami Power",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-special-day|eau de parfum": {
     "id": "503975",
@@ -278,6 +294,14 @@
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-psycho/extrait-de-parfum",
     "in_stock": true
+  },
+  "bujairami-sweet-escape|extrait de parfum": {
+    "id": "503978",
+    "slug": "bujairami-sweet-escape",
+    "name": "Bujairami Sweet Escape",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sweet-escape/extrait-de-parfum",
+    "in_stock": false
   },
   "bujairami-cracka|eau de parfum": {
     "id": "503945",
@@ -303,22 +327,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ripper/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-ace|eau de parfum": {
-    "id": "503935",
-    "slug": "bujairami-ace",
-    "name": "Bujairami Ace",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ace/eau-de-parfum",
-    "in_stock": false
-  },
-  "bujairami-power|eau de parfum": {
-    "id": "503968",
-    "slug": "bujairami-power",
-    "name": "Bujairami Power",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
-    "in_stock": false
-  },
   "bujairami-first-date|eau de parfum": {
     "id": "503950",
     "slug": "bujairami-first-date",
@@ -343,12 +351,12 @@
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-sasha/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-sweet-escape|extrait de parfum": {
-    "id": "503978",
-    "slug": "bujairami-sweet-escape",
-    "name": "Bujairami Sweet Escape",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sweet-escape/extrait-de-parfum",
+  "bujairami-red-static|eau de parfum": {
+    "id": "517188",
+    "slug": "bujairami-red-static",
+    "name": "Bujairami Red Static",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
     "in_stock": false
   },
   "bujairami-short-cake|eau de parfum": {
@@ -382,14 +390,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-the-rock-unleashed/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-red-static|eau de parfum": {
-    "id": "517188",
-    "slug": "bujairami-red-static",
-    "name": "Bujairami Red Static",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
-    "in_stock": false
   },
   "bujairami-candy-crush|eau de parfum": {
     "id": "503942",
@@ -447,14 +447,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-milky-way/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-bad-n-boujee|eau de parfum": {
-    "id": "503937",
-    "slug": "bujairami-bad-n-boujee",
-    "name": "Bujairami Bad N Boujee",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-bad-n-boujee/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-notorious|eau de parfum": {
     "id": "503966",
     "slug": "bujairami-notorious",
@@ -471,14 +463,6 @@
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-short-n-sweet/eau-de-parfum",
     "in_stock": false
   },
-  "bujairami-flex|eau de parfum": {
-    "id": "503951",
-    "slug": "bujairami-flex",
-    "name": "Bujairami Flex",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-flex/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-aussie-glow|extrait de parfum": {
     "id": "517181",
     "slug": "bujairami-aussie-glow",
@@ -487,6 +471,14 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-aussie-glow/extrait-de-parfum",
     "in_stock": false
   },
+  "bujairami-bad-n-boujee|eau de parfum": {
+    "id": "503937",
+    "slug": "bujairami-bad-n-boujee",
+    "name": "Bujairami Bad N Boujee",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-bad-n-boujee/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-blush|eau de parfum": {
     "id": "503940",
     "slug": "bujairami-blush",
@@ -494,6 +486,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-blush/eau-de-parfum",
     "in_stock": false
+  },
+  "bujairami-flex|eau de parfum": {
+    "id": "503951",
+    "slug": "bujairami-flex",
+    "name": "Bujairami Flex",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-flex/eau-de-parfum",
+    "in_stock": true
   },
   "bujairami-lolliepop|eau de parfum": {
     "id": "503956",
@@ -688,7 +688,7 @@
     "in_stock": true
   },
   "bujairami-only-ever|eau de parfum": {
-    "id": "521636",
+    "id": "532801",
     "slug": "bujairami-only-ever",
     "name": "Bujairami Only Ever",
     "concentration": "eau de parfum",
@@ -736,7 +736,7 @@
     "in_stock": true
   },
   "bujairami-the-rock-powerfully|eau de parfum": {
-    "id": "523247",
+    "id": "530963",
     "slug": "bujairami-the-rock-powerfully",
     "name": "Bujairami The Rock Powerfully",
     "concentration": "eau de parfum",
