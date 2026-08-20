@@ -752,12 +752,12 @@
     "in_stock": true
   },
   "bujairami-too-damn-good|extrait de parfum": {
-    "id": "531111",
+    "id": "521641",
     "slug": "bujairami-too-damn-good",
     "name": "Bujairami Too Damn Good",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-too-damn-good/extrait-de-parfum",
-    "in_stock": true
+    "in_stock": false
   },
   "bujairami-vanilla-storm|eau de parfum": {
     "id": "521642",
