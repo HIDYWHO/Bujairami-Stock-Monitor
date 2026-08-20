@@ -279,6 +279,14 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-psycho/extrait-de-parfum",
     "in_stock": true
   },
+  "bujairami-red-static|eau de parfum": {
+    "id": "517188",
+    "slug": "bujairami-red-static",
+    "name": "Bujairami Red Static",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-cracka|eau de parfum": {
     "id": "503945",
     "slug": "bujairami-cracka",
@@ -382,14 +390,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-the-rock-unleashed/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-red-static|eau de parfum": {
-    "id": "517188",
-    "slug": "bujairami-red-static",
-    "name": "Bujairami Red Static",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
-    "in_stock": false
   },
   "bujairami-candy-crush|eau de parfum": {
     "id": "503942",
@@ -752,12 +752,12 @@
     "in_stock": true
   },
   "bujairami-too-damn-good|extrait de parfum": {
-    "id": "521641",
+    "id": "531111",
     "slug": "bujairami-too-damn-good",
     "name": "Bujairami Too Damn Good",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-too-damn-good/extrait-de-parfum",
-    "in_stock": false
+    "in_stock": true
   },
   "bujairami-vanilla-storm|eau de parfum": {
     "id": "521642",
