@@ -183,14 +183,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-madness-extreme/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-chroma|eau de parfum": {
-    "id": "503943",
-    "slug": "bujairami-chroma",
-    "name": "Bujairami Chroma",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-chroma/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-emperor|eau de parfum": {
     "id": "503947",
     "slug": "bujairami-emperor",
@@ -310,6 +302,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ripper/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-chroma|eau de parfum": {
+    "id": "503943",
+    "slug": "bujairami-chroma",
+    "name": "Bujairami Chroma",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-chroma/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-ace|eau de parfum": {
     "id": "503935",
