@@ -390,14 +390,7 @@ def report_unhealthy(reason):
     is_new_outage = h.get("status") != "down"
     reminder_due = (now - h.get("last_alert", 0)) >= CONFIG["health_reminder_hours"] * 3600
     if is_new_outage or reminder_due:
-        send_discord(
-            "\u26a0\ufe0f Bujairami monitor went quiet",
-            f"{reason}\n"
-            f"No successful check for {h['fails']} run(s) in a row. Your saved "
-            f"state was left untouched, so no stock data was lost -- but you are "
-            f"NOT currently getting restock alerts. If this keeps up, the runner "
-            f"IP is most likely being blocked by FragranceNet."
-        )
+        
         log_event(f"HEALTH: monitor quiet -- {reason} (fail #{h['fails']})")
         h["last_alert"] = now
     h["status"] = "down"
@@ -408,11 +401,7 @@ def report_healthy(product_count):
     """A good cycle ran. If we were previously down, ping once that it's back."""
     h = load_health()
     if h.get("status") == "down":
-        send_discord(
-            "\u2705 Bujairami monitor recovered",
-            f"Checks are working again -- tracking {product_count} products. "
-            f"Restock and new-listing alerts are live once more."
-        )
+        
         log_event(f"HEALTH: monitor recovered ({product_count} products)")
     save_health({"status": "ok", "fails": 0, "last_alert": 0})
 
