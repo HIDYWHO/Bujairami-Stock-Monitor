@@ -623,6 +623,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-houdini/extrait-de-parfum",
     "in_stock": false
   },
+  "bujairami-ibiza|extrait de parfum": {
+    "id": "532079",
+    "slug": "bujairami-ibiza",
+    "name": "Bujairami Ibiza",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-ibiza/extrait-de-parfum",
+    "in_stock": true
+  },
   "bujairami-imperial-oud|extrait de parfum": {
     "id": "521630",
     "slug": "bujairami-imperial-oud",
@@ -655,6 +663,14 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-limonana/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-mojito-splash|extrait de parfum": {
+    "id": "531162",
+    "slug": "bujairami-mojito-splash",
+    "name": "Bujairami Mojito Splash",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-mojito-splash/extrait-de-parfum",
+    "in_stock": true
+  },
   "bujairami-mood-swings|eau de parfum": {
     "id": "521633",
     "slug": "bujairami-mood-swings",
@@ -677,6 +693,14 @@
     "name": "Bujairami Next Level",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-next-level/extrait-de-parfum",
+    "in_stock": true
+  },
+  "bujairami-non-stop|extrait de parfum": {
+    "id": "532080",
+    "slug": "bujairami-non-stop",
+    "name": "Bujairami Non Stop",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-non-stop/extrait-de-parfum",
     "in_stock": true
   },
   "bujairami-nuclear|eau de parfum": {
