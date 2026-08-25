@@ -119,14 +119,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-agha/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-enforcer|eau de parfum": {
-    "id": "503948",
-    "slug": "bujairami-enforcer",
-    "name": "Bujairami Enforcer",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-enforcer/eau-de-parfum",
-    "in_stock": false
-  },
   "bujairami-extra-pulse|eau de parfum": {
     "id": "503949",
     "slug": "bujairami-extra-pulse",
@@ -141,6 +133,14 @@
     "name": "Bujairami New York",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
+    "in_stock": false
+  },
+  "bujairami-enforcer|eau de parfum": {
+    "id": "503948",
+    "slug": "bujairami-enforcer",
+    "name": "Bujairami Enforcer",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-enforcer/eau-de-parfum",
     "in_stock": false
   },
   "bujairami-fairy-dust|eau de parfum": {
