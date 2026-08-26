@@ -286,3 +286,4 @@ NEW LISTING:
 [2026-08-25 20:59:08] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #1)
 [2026-08-25 21:50:28] HEALTH: monitor recovered (104 products)
 [2026-08-26 00:01:52] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #1)
+[2026-08-26 01:46:57] HEALTH: monitor recovered (104 products)
