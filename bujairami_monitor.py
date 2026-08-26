@@ -51,6 +51,8 @@ from email.message import EmailMessage
 import requests
 from bs4 import BeautifulSoup
 
+import deep_check
+
 # ==========================================================================
 # CONFIG  -- edit these, or set the matching environment variables
 # ==========================================================================
@@ -430,6 +432,17 @@ def run_once(session):
     # Scrape looks healthy -- clear any prior outage (and ping if we're recovering).
     report_healthy(len(new))
 
+    # The listing page can be stale: a product can read "sold out" there while
+    # its own product page is purchasable. Verify sold-out items directly.
+    try:
+        restocked, blocked = deep_check.run_deep_checks(session, new, log=log)
+        if blocked:
+            log("[warn] deep check hit a block; skipped the rest of the sweep.")
+        if restocked:
+            log(f"Deep check: {len(restocked)} listing(s) were stale.")
+    except Exception as e:
+        log(f"[error] deep check failed, continuing without it: {e}")
+
     in_stock = sum(1 for p in new.values() if p.get("in_stock"))
 
     if not old:
@@ -447,7 +460,8 @@ def run_once(session):
         if back:
             lines.append("BACK IN STOCK:")
             for p in back:
-                lines.append(f"  - {_display(p)}\n    {p['url']}")
+                tag = "  (listing still says sold out)" if p.get("deep_verified") else ""
+                lines.append(f"  - {_display(p)}{tag}\n    {p['url']}")
         if new_added:
             lines.append("NEW LISTING:")
             for p in new_added:
