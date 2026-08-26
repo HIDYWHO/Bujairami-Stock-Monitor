@@ -2,10 +2,9 @@ name: Bujairami Stock Monitor
 
 on:
   schedule:
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'   # every 15 min, offset off the hour
-  workflow_dispatch:                # manual "Run workflow" button for testing
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
+  workflow_dispatch:
 
-# Don't let a slow run overlap the next scheduled one (avoids git push races).
 concurrency:
   group: bujairami-monitor
   cancel-in-progress: false
@@ -14,9 +13,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     permissions:
-      contents: write               # lets the job push the updated state + log
+      contents: write
     env:
-      TZ: America/Los_Angeles       # keep log timestamps in your local time
+      TZ: America/Los_Angeles
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +27,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run monitor (single check)
-                env:
+        env:
           BUJAIRAMI_DISCORD_WEBHOOK: ${{ secrets.BUJAIRAMI_DISCORD_WEBHOOK }}
           DEEP_CHECK_BATCH: "12"
         run: python bujairami_monitor.py --once
