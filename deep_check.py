@@ -237,7 +237,7 @@ def load_watchlist(path=WATCHLIST_FILE):
     slug, name and concentration.
     """
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
     except Exception:
         return []
