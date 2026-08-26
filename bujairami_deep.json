@@ -1,9 +1,9 @@
 {
-  "cursor": "bujairami-vibration|extrait de parfum",
+  "cursor": "bujairami-aussie-glow|extrait de parfum",
   "items": {
     "bujairami-drip-no-7|eau de parfum": {
       "stock": "out",
-      "checked": 1787775099
+      "checked": 1787787638
     },
     "bujairami-houdini|extrait de parfum": {
       "stock": "out",
@@ -15,15 +15,15 @@
     },
     "bujairami-a-la-carte|eau de parfum": {
       "stock": "out",
-      "checked": 1787773304
+      "checked": 1787787659
     },
     "bujairami-ace|eau de parfum": {
       "stock": "out",
-      "checked": 1787773309
+      "checked": 1787787663
     },
     "bujairami-aussie-glow|extrait de parfum": {
       "stock": "out",
-      "checked": 1787773313
+      "checked": 1787787666
     },
     "bujairami-blush|eau de parfum": {
       "stock": "out",
@@ -39,7 +39,7 @@
     },
     "bujairami-dead-serious|extrait de parfum": {
       "stock": "out",
-      "checked": 1787775095
+      "checked": 1787787635
     },
     "bujairami-enforcer|eau de parfum": {
       "stock": "out",
@@ -47,7 +47,7 @@
     },
     "bujairami-executor|extrait de parfum": {
       "stock": "out",
-      "checked": 1787775103
+      "checked": 1787787640
     },
     "bujairami-ibiza|extrait de parfum": {
       "stock": "out",
@@ -55,7 +55,7 @@
     },
     "bujairami-its-all-roses|extrait de parfum": {
       "stock": "out",
-      "checked": 1787775106
+      "checked": 1787787642
     },
     "bujairami-lolliepop|eau de parfum": {
       "stock": "out",
@@ -79,7 +79,7 @@
     },
     "bujairami-red-eclipse|eau de parfum": {
       "stock": "out",
-      "checked": 1787775110
+      "checked": 1787787645
     },
     "bujairami-red-static|eau de parfum": {
       "stock": "out",
@@ -95,11 +95,11 @@
     },
     "bujairami-too-damn-good|extrait de parfum": {
       "stock": "out",
-      "checked": 1787775114
+      "checked": 1787787648
     },
     "bujairami-vice-city|eau de parfum": {
       "stock": "out",
-      "checked": 1787775117
+      "checked": 1787787650
     },
     "bujairami-sweet-escape|extrait de parfum": {
       "stock": "out",
@@ -108,6 +108,14 @@
     "bujairami-vibration|extrait de parfum": {
       "stock": "out",
       "checked": 1787775122
+    },
+    "bujairami-way-2-sexy|eau de parfum": {
+      "stock": "out",
+      "checked": 1787787653
+    },
+    "bujairami-wicked|eau de parfum": {
+      "stock": "out",
+      "checked": 1787787657
     }
   }
 }
