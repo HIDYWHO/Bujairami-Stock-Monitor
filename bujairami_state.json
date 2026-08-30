@@ -279,14 +279,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-cracka/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-drip|extrait de parfum": {
-    "id": "517182",
-    "slug": "bujairami-drip",
-    "name": "Bujairami Drip",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
-    "in_stock": true
-  },
   "bujairami-chroma|eau de parfum": {
     "id": "503943",
     "slug": "bujairami-chroma",
@@ -406,6 +398,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-silent-halo/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-drip|extrait de parfum": {
+    "id": "517182",
+    "slug": "bujairami-drip",
+    "name": "Bujairami Drip",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
+    "in_stock": false
   },
   "bujairami-ripper|eau de parfum": {
     "id": "503969",
