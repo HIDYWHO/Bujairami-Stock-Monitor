@@ -279,6 +279,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-cracka/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-drip|extrait de parfum": {
+    "id": "517182",
+    "slug": "bujairami-drip",
+    "name": "Bujairami Drip",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
+    "in_stock": true
+  },
   "bujairami-chroma|eau de parfum": {
     "id": "503943",
     "slug": "bujairami-chroma",
@@ -286,6 +294,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-chroma/eau-de-parfum",
     "in_stock": false
+  },
+  "bujairami-short-cake|eau de parfum": {
+    "id": "503973",
+    "slug": "bujairami-short-cake",
+    "name": "Bujairami Short Cake",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-short-cake/eau-de-parfum",
+    "in_stock": true
   },
   "bujairami-ace|eau de parfum": {
     "id": "503935",
@@ -335,12 +351,12 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sweet-escape/extrait-de-parfum",
     "in_stock": false
   },
-  "bujairami-short-cake|eau de parfum": {
-    "id": "503973",
-    "slug": "bujairami-short-cake",
-    "name": "Bujairami Short Cake",
+  "bujairami-candy-crush|eau de parfum": {
+    "id": "503942",
+    "slug": "bujairami-candy-crush",
+    "name": "Bujairami Candy Crush",
     "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-short-cake/eau-de-parfum",
+    "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-candy-crush/eau-de-parfum",
     "in_stock": true
   },
   "bujairami-the-rock-absolutely|eau de parfum": {
@@ -375,14 +391,6 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
     "in_stock": false
   },
-  "bujairami-candy-crush|eau de parfum": {
-    "id": "503942",
-    "slug": "bujairami-candy-crush",
-    "name": "Bujairami Candy Crush",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-candy-crush/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-lychee|eau de parfum": {
     "id": "503958",
     "slug": "bujairami-lychee",
@@ -398,14 +406,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-silent-halo/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-drip|extrait de parfum": {
-    "id": "517182",
-    "slug": "bujairami-drip",
-    "name": "Bujairami Drip",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
-    "in_stock": false
   },
   "bujairami-ripper|eau de parfum": {
     "id": "503969",
