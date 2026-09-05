@@ -1,13 +1,13 @@
 {
-  "cursor": "bujairami-boss-life|extrait de parfum",
+  "cursor": "bujairami-ibiza|extrait de parfum",
   "items": {
     "bujairami-drip-no-7|eau de parfum": {
       "stock": "out",
-      "checked": 1788612646
+      "checked": 1788629690
     },
     "bujairami-houdini|extrait de parfum": {
       "stock": "out",
-      "checked": 1788551675
+      "checked": 1788629718
     },
     "bujairami-imperial-oud|extrait de parfum": {
       "stock": "out",
@@ -31,27 +31,27 @@
     },
     "bujairami-chroma|eau de parfum": {
       "stock": "out",
-      "checked": 1788551665
+      "checked": 1788629708
     },
     "bujairami-dead-serious|extrait de parfum": {
       "stock": "out",
-      "checked": 1788612644
+      "checked": 1788629686
     },
     "bujairami-enforcer|eau de parfum": {
       "stock": "out",
-      "checked": 1788551671
+      "checked": 1788629715
     },
     "bujairami-executor|extrait de parfum": {
       "stock": "out",
-      "checked": 1788612650
+      "checked": 1788629694
     },
     "bujairami-ibiza|extrait de parfum": {
       "stock": "out",
-      "checked": 1788564436
+      "checked": 1788629721
     },
     "bujairami-its-all-roses|extrait de parfum": {
       "stock": "out",
-      "checked": 1788612653
+      "checked": 1788629697
     },
     "bujairami-lolliepop|eau de parfum": {
       "stock": "out",
@@ -71,7 +71,7 @@
     },
     "bujairami-red-eclipse|eau de parfum": {
       "stock": "out",
-      "checked": 1788612657
+      "checked": 1788629701
     },
     "bujairami-red-static|eau de parfum": {
       "stock": "out",
@@ -87,11 +87,11 @@
     },
     "bujairami-too-damn-good|extrait de parfum": {
       "stock": "out",
-      "checked": 1788612660
+      "checked": 1788629703
     },
     "bujairami-vice-city|eau de parfum": {
       "stock": "out",
-      "checked": 1788612663
+      "checked": 1788629705
     },
     "bujairami-sweet-escape|extrait de parfum": {
       "stock": "out",
@@ -123,7 +123,7 @@
     },
     "bujairami-drip|extrait de parfum": {
       "stock": "out",
-      "checked": 1788551668
+      "checked": 1788629712
     }
   }
 }
