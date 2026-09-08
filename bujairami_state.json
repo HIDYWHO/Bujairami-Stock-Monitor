@@ -405,8 +405,7 @@
     "name": "Bujairami Drip",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
-    "in_stock": true,
-    "deep_verified": true
+    "in_stock": false
   },
   "bujairami-ripper|eau de parfum": {
     "id": "503969",
