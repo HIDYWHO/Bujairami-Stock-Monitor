@@ -71,6 +71,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-mafia-boss/extrait-de-parfum",
     "in_stock": true
   },
+  "bujairami-new-york|eau de parfum": {
+    "id": "503964",
+    "slug": "bujairami-new-york",
+    "name": "Bujairami New York",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-inferno|eau de parfum": {
     "id": "524830",
     "slug": "bujairami-inferno",
@@ -126,14 +134,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-extra-pulse/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-new-york|eau de parfum": {
-    "id": "503964",
-    "slug": "bujairami-new-york",
-    "name": "Bujairami New York",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
-    "in_stock": false
   },
   "bujairami-enforcer|eau de parfum": {
     "id": "503948",
