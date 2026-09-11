@@ -71,14 +71,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-mafia-boss/extrait-de-parfum",
     "in_stock": true
   },
-  "bujairami-new-york|eau de parfum": {
-    "id": "503964",
-    "slug": "bujairami-new-york",
-    "name": "Bujairami New York",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-inferno|eau de parfum": {
     "id": "524830",
     "slug": "bujairami-inferno",
@@ -134,6 +126,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-extra-pulse/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-new-york|eau de parfum": {
+    "id": "503964",
+    "slug": "bujairami-new-york",
+    "name": "Bujairami New York",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-new-york/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-enforcer|eau de parfum": {
     "id": "503948",
@@ -271,6 +271,14 @@
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-psycho/extrait-de-parfum",
     "in_stock": true
   },
+  "bujairami-red-static|eau de parfum": {
+    "id": "517188",
+    "slug": "bujairami-red-static",
+    "name": "Bujairami Red Static",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-cracka|eau de parfum": {
     "id": "503945",
     "slug": "bujairami-cracka",
@@ -374,14 +382,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-the-rock-unleashed/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-red-static|eau de parfum": {
-    "id": "517188",
-    "slug": "bujairami-red-static",
-    "name": "Bujairami Red Static",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
-    "in_stock": false
   },
   "bujairami-lychee|eau de parfum": {
     "id": "503958",
