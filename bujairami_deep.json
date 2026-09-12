@@ -1,9 +1,9 @@
 {
-  "cursor": "bujairami-imperial-oud|extrait de parfum",
+  "cursor": "bujairami-power|eau de parfum",
   "items": {
     "bujairami-drip-no-7|eau de parfum": {
       "stock": "out",
-      "checked": 1789186963
+      "checked": 1789235353
     },
     "bujairami-houdini|extrait de parfum": {
       "stock": "out",
@@ -35,7 +35,7 @@
     },
     "bujairami-dead-serious|extrait de parfum": {
       "stock": "out",
-      "checked": 1789186961
+      "checked": 1789235348
     },
     "bujairami-enforcer|eau de parfum": {
       "stock": "out",
@@ -43,7 +43,7 @@
     },
     "bujairami-executor|extrait de parfum": {
       "stock": "out",
-      "checked": 1789186967
+      "checked": 1789235356
     },
     "bujairami-ibiza|extrait de parfum": {
       "stock": "out",
@@ -51,23 +51,23 @@
     },
     "bujairami-its-all-roses|extrait de parfum": {
       "stock": "out",
-      "checked": 1789186969
+      "checked": 1789235360
     },
     "bujairami-lolliepop|eau de parfum": {
       "stock": "out",
-      "checked": 1789074132
+      "checked": 1789235373
     },
     "bujairami-notorious|eau de parfum": {
       "stock": "out",
-      "checked": 1789074138
+      "checked": 1789235382
     },
     "bujairami-power|eau de parfum": {
       "stock": "out",
-      "checked": 1789081380
+      "checked": 1789235385
     },
     "bujairami-red-eclipse|eau de parfum": {
       "stock": "out",
-      "checked": 1789186972
+      "checked": 1789235363
     },
     "bujairami-short-n-sweet|eau de parfum": {
       "stock": "out",
@@ -79,11 +79,11 @@
     },
     "bujairami-too-damn-good|extrait de parfum": {
       "stock": "out",
-      "checked": 1789186975
+      "checked": 1789235367
     },
     "bujairami-vice-city|eau de parfum": {
       "stock": "out",
-      "checked": 1789186978
+      "checked": 1789235370
     },
     "bujairami-sweet-escape|extrait de parfum": {
       "stock": "out",
@@ -107,7 +107,7 @@
     },
     "bujairami-non-stop|extrait de parfum": {
       "stock": "out",
-      "checked": 1789074136
+      "checked": 1789235379
     },
     "bujairami-a-la-carte|eau de parfum": {
       "stock": "out",
@@ -116,6 +116,10 @@
     "bujairami-drip|extrait de parfum": {
       "stock": "out",
       "checked": 1789186981
+    },
+    "bujairami-new-york|eau de parfum": {
+      "stock": "out",
+      "checked": 1789235375
     }
   }
 }
