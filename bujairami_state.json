@@ -223,6 +223,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-breezy/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-power|eau de parfum": {
+    "id": "503968",
+    "slug": "bujairami-power",
+    "name": "Bujairami Power",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-the-hype|eau de parfum": {
     "id": "503980",
     "slug": "bujairami-the-hype",
@@ -279,6 +287,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-cracka/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-drip|extrait de parfum": {
+    "id": "517182",
+    "slug": "bujairami-drip",
+    "name": "Bujairami Drip",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
+    "in_stock": true
+  },
   "bujairami-chroma|eau de parfum": {
     "id": "503943",
     "slug": "bujairami-chroma",
@@ -301,14 +317,6 @@
     "name": "Bujairami Ace",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ace/eau-de-parfum",
-    "in_stock": false
-  },
-  "bujairami-power|eau de parfum": {
-    "id": "503968",
-    "slug": "bujairami-power",
-    "name": "Bujairami Power",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
     "in_stock": false
   },
   "bujairami-first-date|eau de parfum": {
@@ -398,14 +406,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-silent-halo/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-drip|extrait de parfum": {
-    "id": "517182",
-    "slug": "bujairami-drip",
-    "name": "Bujairami Drip",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-drip/extrait-de-parfum",
-    "in_stock": false
   },
   "bujairami-ripper|eau de parfum": {
     "id": "503969",
