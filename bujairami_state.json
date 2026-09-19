@@ -223,14 +223,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-breezy/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-power|eau de parfum": {
-    "id": "503968",
-    "slug": "bujairami-power",
-    "name": "Bujairami Power",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-the-hype|eau de parfum": {
     "id": "503980",
     "slug": "bujairami-the-hype",
@@ -309,6 +301,14 @@
     "name": "Bujairami Ace",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ace/eau-de-parfum",
+    "in_stock": false
+  },
+  "bujairami-power|eau de parfum": {
+    "id": "503968",
+    "slug": "bujairami-power",
+    "name": "Bujairami Power",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-power/eau-de-parfum",
     "in_stock": false
   },
   "bujairami-first-date|eau de parfum": {
