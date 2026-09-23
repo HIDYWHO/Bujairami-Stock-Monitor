@@ -191,14 +191,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-emperor/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-blackjack|eau de parfum": {
-    "id": "503939",
-    "slug": "bujairami-blackjack",
-    "name": "Bujairami Blackjack",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-blackjack/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-madness|eau de parfum": {
     "id": "503959",
     "slug": "bujairami-madness",
@@ -285,6 +277,14 @@
     "name": "Bujairami Chroma",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-chroma/eau-de-parfum",
+    "in_stock": false
+  },
+  "bujairami-blackjack|eau de parfum": {
+    "id": "503939",
+    "slug": "bujairami-blackjack",
+    "name": "Bujairami Blackjack",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-blackjack/eau-de-parfum",
     "in_stock": false
   },
   "bujairami-short-cake|eau de parfum": {
@@ -741,7 +741,7 @@
     "name": "Bujairami Red Eclipse",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-eclipse/eau-de-parfum",
-    "in_stock": true
+    "in_stock": false
   },
   "bujairami-say-less|eau de parfum": {
     "id": "521597",
