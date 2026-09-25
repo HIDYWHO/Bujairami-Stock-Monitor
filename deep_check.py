@@ -29,6 +29,13 @@ Once a product page confirms in stock, that verdict is re-applied every cycle
 until a later deep check sees it sold out. Without this you get a duplicate
 alert when the listing finally catches up.
 
+FLAKY 404s (Sept 2026 redesign)
+FragranceNet's new Next.js site returns "Page Not Found" (404) for real product
+pages at random, often more than half the time. A 404 is now retried up to
+DEEP_CHECK_RETRIES times and never treated as a verdict. Stock is read from
+JSON-LD first, then the Next.js __NEXT_DATA__ isOutOfStock flags, then the
+add-to-bag / notify-me buttons.
+
 CLI
     python deep_check.py --probe "https://www.fragrancenet.com/..."
     python deep_check.py --probe-file saved.html
@@ -61,6 +68,20 @@ MAX_DELAY = float(os.environ.get("DEEP_CHECK_MAX_DELAY", "3.5"))
 TIMEOUT = int(os.environ.get("DEEP_CHECK_TIMEOUT", "25"))
 WATCHLIST_FILE = os.environ.get("DEEP_CHECK_WATCHLIST", "bujairami_watchlist.json")
 DEEP_STATE_FILE = os.environ.get("DEEP_CHECK_STATE", "bujairami_deep.json")
+
+# FragranceNet's 2026 redesign (Next.js) randomly answers a real product URL
+# with a 404 "Page Not Found" roughly half the time, even for a normal browser.
+# The same URL loads fine on the next try, so a 404 is retried instead of being
+# treated as "page gone".
+RETRIES = int(os.environ.get("DEEP_CHECK_RETRIES", "7"))
+RETRY_MIN = float(os.environ.get("DEEP_CHECK_RETRY_MIN", "0.8"))
+RETRY_MAX = float(os.environ.get("DEEP_CHECK_RETRY_MAX", "2.0"))
+# Hard cap on how long one deep sweep may take, so a bad night at FragranceNet
+# can't push a GitHub Actions run past the next 5 minute slot.
+BUDGET_SEC = float(os.environ.get("DEEP_CHECK_BUDGET_SEC", "180"))
+REFERER = "https://www.fragrancenet.com/fragrances/bujairami"
+
+SOFT_404_PAT = re.compile(r"<title>\s*page not found", re.I)
 
 IN_TOKENS = ("instock", "limitedavailability", "onlineonly", "instoreonly")
 OUT_TOKENS = ("outofstock", "soldout", "discontinued", "preorder", "backorder")
@@ -96,10 +117,35 @@ def make_session():
 def fetch(session, url):
     """Returns (status_code, html, final_url). status 0 means the request blew up."""
     try:
-        r = session.get(url, timeout=TIMEOUT)
-        return r.status_code, r.text, r.url
+        r = session.get(url, timeout=TIMEOUT, headers={
+            "Referer": REFERER,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Cache-Control": "no-cache",
+        })
+        status, text = r.status_code, r.text
+        # The new site sometimes serves its "Page Not Found" template with a 200.
+        if status == 200 and SOFT_404_PAT.search(text[:20000]):
+            status = 404
+        return status, text, r.url
     except Exception as e:
         return 0, "", str(e)
+
+
+def fetch_retry(session, url, retries=None, sleep=time.sleep):
+    """
+    fetch() that retries FragranceNet's flaky 404s (and 5xx / network errors).
+    403 and 429 are real blocks and return immediately so the sweep can stop.
+    Returns (status_code, html, final_url, attempts).
+    """
+    retries = RETRIES if retries is None else retries
+    status, html, final = 0, "", ""
+    for attempt in range(1, max(1, retries) + 1):
+        status, html, final = fetch(session, url)
+        if status == 200 or status in (403, 429):
+            return status, html, final, attempt
+        if attempt < retries:
+            sleep(random.uniform(RETRY_MIN, RETRY_MAX))
+    return status, html, final, attempt
 
 
 # ---------------------------------------------------------------- detection
@@ -132,6 +178,30 @@ def jsonld_signals(soup):
         except Exception:
             found.extend(re.findall(r'"availability"\s*:\s*"([^"]+)"', raw))
     return found
+
+
+def nextdata_signals(soup):
+    """
+    The redesigned site is Next.js. Its __NEXT_DATA__ blob carries a per-size
+    isOutOfStock flag at props.pageProps.pageData.skuList[*].SIZE[*].
+    Returns a list of booleans (True = that size is out of stock).
+    """
+    tag = soup.find("script", id="__NEXT_DATA__")
+    if not tag:
+        return []
+    try:
+        data = json.loads(tag.string or tag.get_text() or "")
+        skus = data["props"]["pageProps"]["pageData"]["skuList"]
+    except Exception:
+        return []
+    flags = []
+    for group in skus or []:
+        if not isinstance(group, dict):
+            continue
+        for size in group.get("SIZE") or []:
+            if isinstance(size, dict) and "isOutOfStock" in size:
+                flags.append(bool(size["isOutOfStock"]))
+    return flags
 
 
 def cart_signals(soup):
@@ -186,6 +256,12 @@ def detect_stock(html):
         if any(any(t in n for t in OUT_TOKENS) for n in norms):
             return False, "json-ld availability: %s" % ", ".join(sorted(set(avail)))
 
+    flags = nextdata_signals(soup)
+    if flags:
+        if not all(flags):
+            return True, "next data: %d of %d size(s) in stock" % (flags.count(False), len(flags))
+        return False, "next data: all %d size(s) out of stock" % len(flags)
+
     live, dead = cart_signals(soup)
     if live:
         return True, "active add-to-cart control (%s)" % live[0]
@@ -196,17 +272,18 @@ def detect_stock(html):
     return None, "no usable stock signal found"
 
 
-def check_product(session, url):
+def check_product(session, url, retries=None):
     """Returns (state, reason, http_status)."""
-    status, html, final = fetch(session, url)
+    status, html, final, tries = fetch_retry(session, url, retries)
+    note = "" if tries == 1 else ", took %d tries" % tries
     if status in (403, 429):
         return None, "blocked http %s" % status, status
     if status == 404:
-        return None, "404, product page gone", status
+        return None, "404 on all %d tries (FragranceNet flaking), will retry next cycle" % tries, status
     if status != 200:
-        return None, "http %s (%s)" % (status, str(final)[:60]), status
+        return None, "http %s after %d tries (%s)" % (status, tries, str(final)[:60]), status
     state, reason = detect_stock(html)
-    return state, reason, status
+    return state, reason + note, status
 
 
 # ---------------------------------------------------------------- state
@@ -313,6 +390,9 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
                                           deep.get("cursor", ""), batch, mode)
 
     restocked, blocked = [], False
+    started = time.time()
+    last_rotated = None  # last non-watchlist key actually attempted
+    watch_keys = {k for k in targets if on_watchlist(k, products[k], patterns)}
 
     for i, key in enumerate(targets):
         prod = products[key]
@@ -322,9 +402,16 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
             log(f"  deep: no url for {key}, skipping")
             continue
 
+        if time.time() - started > BUDGET_SEC:
+            log(f"  deep: time budget ({BUDGET_SEC:.0f}s) used up, "
+                f"{len(targets) - i} left for next cycle")
+            break
+
         if i:
             time.sleep(random.uniform(MIN_DELAY, MAX_DELAY))
 
+        if key not in watch_keys:
+            last_rotated = key
         state, reason, status = check_product(session, url)
         log(f"  deep: {label[:42]:<42} -> {str(state):<5} ({reason})")
 
@@ -354,6 +441,11 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
         if prod.get("in_stock") and not prod.get("deep_verified"):
             items.pop(key, None)
 
+    # If the sweep stopped early (block or time budget), resume rotation right
+    # after the last product we actually got to instead of skipping ahead.
+    if mode != "watchlist" and last_rotated and last_rotated != next_cursor \
+            and (blocked or time.time() - started > BUDGET_SEC):
+        next_cursor = last_rotated
     deep["cursor"] = next_cursor
     save_deep(deep)
     return restocked, blocked
@@ -371,6 +463,8 @@ def probe(html, url=""):
     print("title:", title.get_text(strip=True)[:90] if title else "(none)")
     print("-" * 68)
     print("json-ld availability:", jsonld_signals(soup) or "(none found)")
+    flags = nextdata_signals(soup)
+    print("next data isOutOfStock per size:", flags if flags else "(none found)")
     live, dead = cart_signals(soup)
     print("active cart controls:", live or "(none)")
     print("disabled cart controls:", dead or "(none)")
@@ -394,8 +488,8 @@ def main():
 
     if args.probe:
         session = make_session()
-        status, html, final = fetch(session, args.probe)
-        print("http status:", status)
+        status, html, final, tries = fetch_retry(session, args.probe)
+        print("http status:", status, "(after %d tries)" % tries)
         if status != 200:
             print("final/error:", final)
             if status in (403, 429):
