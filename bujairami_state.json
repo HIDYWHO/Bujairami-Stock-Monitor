@@ -63,14 +63,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-city-life/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-mafia-boss|extrait de parfum": {
-    "id": "503961",
-    "slug": "bujairami-mafia-boss",
-    "name": "Bujairami Mafia Boss",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-mafia-boss/extrait-de-parfum",
-    "in_stock": true
-  },
   "bujairami-new-york|eau de parfum": {
     "id": "503964",
     "slug": "bujairami-new-york",
@@ -134,6 +126,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-extra-pulse/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-mafia-boss|extrait de parfum": {
+    "id": "503961",
+    "slug": "bujairami-mafia-boss",
+    "name": "Bujairami Mafia Boss",
+    "concentration": "extrait de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-mafia-boss/extrait-de-parfum",
+    "in_stock": false
   },
   "bujairami-enforcer|eau de parfum": {
     "id": "503948",
@@ -717,7 +717,7 @@
     "name": "Bujairami Oasis",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-oasis/eau-de-parfum",
-    "in_stock": false
+    "in_stock": true
   },
   "bujairami-only-ever|eau de parfum": {
     "id": "521636",
@@ -789,7 +789,7 @@
     "name": "Bujairami Too Damn Good",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-too-damn-good/extrait-de-parfum",
-    "in_stock": false
+    "in_stock": true
   },
   "bujairami-vanilla-storm|eau de parfum": {
     "id": "521642",
