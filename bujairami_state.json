@@ -653,7 +653,7 @@
     "name": "Bujairami Legacy",
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-legacy/extrait-de-parfum",
-    "in_stock": true
+    "in_stock": false
   },
   "bujairami-limonana|eau de parfum": {
     "id": "521631",
@@ -717,7 +717,7 @@
     "name": "Bujairami Oasis",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-oasis/eau-de-parfum",
-    "in_stock": true
+    "in_stock": false
   },
   "bujairami-only-ever|eau de parfum": {
     "id": "521636",
