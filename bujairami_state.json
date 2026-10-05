@@ -111,6 +111,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-mafia-boss/extrait-de-parfum",
     "in_stock": false
   },
+  "bujairami-agha|eau de parfum": {
+    "id": "503936",
+    "slug": "bujairami-agha",
+    "name": "Bujairami Agha",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-agha/eau-de-parfum",
+    "in_stock": true
+  },
   "bujairami-ruthless-vanilla|eau de parfum": {
     "id": "503971",
     "slug": "bujairami-ruthless-vanilla",
@@ -181,14 +189,6 @@
     "name": "Bujairami Breezy",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-breezy/eau-de-parfum",
-    "in_stock": true
-  },
-  "bujairami-agha|eau de parfum": {
-    "id": "503936",
-    "slug": "bujairami-agha",
-    "name": "Bujairami Agha",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-agha/eau-de-parfum",
     "in_stock": true
   },
   "bujairami-madness|eau de parfum": {
@@ -335,22 +335,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-i-have-money/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-red-static|eau de parfum": {
-    "id": "517188",
-    "slug": "bujairami-red-static",
-    "name": "Bujairami Red Static",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
-    "in_stock": false
-  },
-  "bujairami-ripper|eau de parfum": {
-    "id": "503969",
-    "slug": "bujairami-ripper",
-    "name": "Bujairami Ripper",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ripper/eau-de-parfum",
-    "in_stock": false
-  },
   "bujairami-candy-crush|eau de parfum": {
     "id": "503942",
     "slug": "bujairami-candy-crush",
@@ -383,6 +367,14 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-gladiator/eau-de-parfum",
     "in_stock": true
   },
+  "bujairami-red-static|eau de parfum": {
+    "id": "517188",
+    "slug": "bujairami-red-static",
+    "name": "Bujairami Red Static",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-red-static/eau-de-parfum",
+    "in_stock": false
+  },
   "bujairami-lychee|eau de parfum": {
     "id": "503958",
     "slug": "bujairami-lychee",
@@ -414,6 +406,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-sovereign/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-ripper|eau de parfum": {
+    "id": "503969",
+    "slug": "bujairami-ripper",
+    "name": "Bujairami Ripper",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-ripper/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-bad-n-boujee|eau de parfum": {
     "id": "503937",
