@@ -103,14 +103,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-the-rock-intensely/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-vanilla-dream|eau de parfum": {
-    "id": "503985",
-    "slug": "bujairami-vanilla-dream",
-    "name": "Bujairami Vanilla Dream",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-vanilla-dream/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-mafia-boss|extrait de parfum": {
     "id": "503961",
     "slug": "bujairami-mafia-boss",
@@ -222,6 +214,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-the-aftermath/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-vanilla-dream|eau de parfum": {
+    "id": "503985",
+    "slug": "bujairami-vanilla-dream",
+    "name": "Bujairami Vanilla Dream",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-vanilla-dream/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-special-day|eau de parfum": {
     "id": "503975",
