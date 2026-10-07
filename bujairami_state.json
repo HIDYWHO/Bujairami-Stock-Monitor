@@ -159,14 +159,6 @@
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-fairy-dust/eau-de-parfum",
     "in_stock": true
   },
-  "bujairami-madness-extreme|eau de parfum": {
-    "id": "503960",
-    "slug": "bujairami-madness-extreme",
-    "name": "Bujairami Madness Extreme",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-madness-extreme/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-lush-fig|eau de parfum": {
     "id": "503957",
     "slug": "bujairami-lush-fig",
@@ -262,6 +254,14 @@
     "concentration": "extrait de parfum",
     "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-psycho/extrait-de-parfum",
     "in_stock": true
+  },
+  "bujairami-madness-extreme|eau de parfum": {
+    "id": "503960",
+    "slug": "bujairami-madness-extreme",
+    "name": "Bujairami Madness Extreme",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-madness-extreme/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-cracka|eau de parfum": {
     "id": "503945",
