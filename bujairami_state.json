@@ -525,7 +525,7 @@
     "name": "Bujairami Ahla Sabiyeh",
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/perfume/bujairami/bujairami-ahla-sabiyeh/eau-de-parfum",
-    "in_stock": true
+    "in_stock": false
   },
   "bujairami-arabian-valley|eau de parfum": {
     "id": "521622",
@@ -742,14 +742,6 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-say-less/eau-de-parfum",
     "in_stock": true
-  },
-  "bujairami-smokilla|extrait de parfum": {
-    "id": "521638",
-    "slug": "bujairami-smokilla",
-    "name": "Bujairami Smokilla",
-    "concentration": "extrait de parfum",
-    "url": "https://www.fragrancenet.com/fragrances/bujairami/bujairami-smokilla/extrait-de-parfum",
-    "in_stock": false
   },
   "bujairami-tenfold|extrait de parfum": {
     "id": "521639",
