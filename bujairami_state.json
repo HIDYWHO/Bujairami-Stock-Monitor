@@ -39,14 +39,6 @@
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-kingsman/extrait-de-parfum",
     "in_stock": true
   },
-  "bujairami-date-night|eau de parfum": {
-    "id": "503946",
-    "slug": "bujairami-date-night",
-    "name": "Bujairami Date Night",
-    "concentration": "eau de parfum",
-    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-date-night/eau-de-parfum",
-    "in_stock": true
-  },
   "bujairami-stellar|eau de parfum": {
     "id": "503976",
     "slug": "bujairami-stellar",
@@ -86,6 +78,14 @@
     "concentration": "eau de parfum",
     "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-inferno/eau-de-parfum",
     "in_stock": true
+  },
+  "bujairami-date-night|eau de parfum": {
+    "id": "503946",
+    "slug": "bujairami-date-night",
+    "name": "Bujairami Date Night",
+    "concentration": "eau de parfum",
+    "url": "https://www.fragrancenet.com/cologne/bujairami/bujairami-date-night/eau-de-parfum",
+    "in_stock": false
   },
   "bujairami-billionaires-club|eau de parfum": {
     "id": "503938",
