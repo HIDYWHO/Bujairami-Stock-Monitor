@@ -1,9 +1,9 @@
 {
-  "cursor": "bujairami-lolliepop|eau de parfum",
+  "cursor": "bujairami-oasis|eau de parfum",
   "items": {
     "bujairami-drip-no-7|eau de parfum": {
       "stock": "out",
-      "checked": 1792075279
+      "checked": 1792164736
     },
     "bujairami-houdini|extrait de parfum": {
       "stock": "out",
@@ -29,13 +29,9 @@
       "stock": "out",
       "checked": 1791939219
     },
-    "bujairami-chroma|eau de parfum": {
-      "stock": "out",
-      "checked": 1791939221
-    },
     "bujairami-dead-serious|extrait de parfum": {
       "stock": "out",
-      "checked": 1792075276
+      "checked": 1792164734
     },
     "bujairami-enforcer|eau de parfum": {
       "stock": "out",
@@ -43,7 +39,7 @@
     },
     "bujairami-executor|extrait de parfum": {
       "stock": "out",
-      "checked": 1792075282
+      "checked": 1792164739
     },
     "bujairami-ibiza|extrait de parfum": {
       "stock": "out",
@@ -51,7 +47,7 @@
     },
     "bujairami-its-all-roses|extrait de parfum": {
       "stock": "out",
-      "checked": 1792075285
+      "checked": 1792164743
     },
     "bujairami-lolliepop|eau de parfum": {
       "stock": "out",
@@ -59,7 +55,7 @@
     },
     "bujairami-notorious|eau de parfum": {
       "stock": "out",
-      "checked": 1791238248
+      "checked": 1792164762
     },
     "bujairami-short-n-sweet|eau de parfum": {
       "stock": "out",
@@ -87,15 +83,11 @@
     },
     "bujairami-non-stop|extrait de parfum": {
       "stock": "out",
-      "checked": 1791238246
+      "checked": 1792164758
     },
     "bujairami-a-la-carte|eau de parfum": {
       "stock": "out",
       "checked": 1791658581
-    },
-    "bujairami-red-static|eau de parfum": {
-      "stock": "out",
-      "checked": 1791398359
     },
     "bujairami-sweet-escape|extrait de parfum": {
       "stock": "out",
@@ -115,11 +107,11 @@
     },
     "bujairami-mood-swings|eau de parfum": {
       "stock": "out",
-      "checked": 1791238243
+      "checked": 1792164756
     },
     "bujairami-red-eclipse|eau de parfum": {
       "stock": "out",
-      "checked": 1792075287
+      "checked": 1792164746
     },
     "bujairami-blackjack|eau de parfum": {
       "stock": "out",
@@ -131,15 +123,15 @@
     },
     "bujairami-mafia-boss|extrait de parfum": {
       "stock": "out",
-      "checked": 1791238240
+      "checked": 1792164752
     },
     "bujairami-oasis|eau de parfum": {
       "stock": "out",
-      "checked": 1791398354
+      "checked": 1792164767
     },
     "bujairami-nuclear|eau de parfum": {
       "stock": "out",
-      "checked": 1791398351
+      "checked": 1792164764
     },
     "bujairami-silent-halo|eau de parfum": {
       "stock": "out",
@@ -152,6 +144,10 @@
     "bujairami-date-night|eau de parfum": {
       "stock": "out",
       "checked": 1791939225
+    },
+    "bujairami-madness-extreme|eau de parfum": {
+      "stock": "out",
+      "checked": 1792164748
     }
   }
 }
