@@ -594,3 +594,4 @@ NEW LISTING:
 [2026-10-25 16:21:09] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #17)
 [2026-10-25 23:24:44] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #19)
 [2026-10-26 06:21:32] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #20)
+[2026-10-26 12:24:49] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #21)
