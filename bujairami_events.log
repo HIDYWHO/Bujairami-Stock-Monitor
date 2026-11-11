@@ -656,3 +656,7 @@ NEW LISTING:
 [2026-11-10 09:44:50] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #8)
 [2026-11-10 18:09:19] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #10)
 [2026-11-11 01:17:27] HEALTH: monitor quiet -- Scrape failed or returned no products (possible IP block or a change to the site). (fail #11)
+[2026-11-11 09:13:12] Bujairami monitor went quiet [GitHub]
+No good check for 5.9 h (4 failed runs).
+Latest: page 1 fetch failed: 403 Client Error: Forbidden for url: https://www.fragrancenet.com/fragrances/bujairami
+Silence right now does NOT mean nothing is in stock.

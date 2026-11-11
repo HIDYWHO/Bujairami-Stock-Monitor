@@ -1,8 +1,8 @@
 {
   "status": "down",
-  "fails": 3,
+  "fails": 4,
   "down_since": 1794396128.1829846,
-  "alerted": false,
-  "last_alert": 0,
+  "alerted": true,
+  "last_alert": 1794417192.7474995,
   "reason": "page 1 fetch failed: 403 Client Error: Forbidden for url: https://www.fragrancenet.com/fragrances/bujairami"
 }
