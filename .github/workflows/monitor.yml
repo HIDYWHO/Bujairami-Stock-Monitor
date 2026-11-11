@@ -47,8 +47,9 @@ jobs:
         env:
           BUJAIRAMI_DISCORD_WEBHOOK: ${{ secrets.BUJAIRAMI_DISCORD_WEBHOOK }}
           DEEP_CHECK_BATCH: "12"
-          # Often blocked (403) for days on GitHub, so nag once a day, not every 6 hours.
-          HEALTH_REMINDER_HOURS: "24"
+          # GitHub's IPs are often blocked (403) for days. 0 = no "still down"
+          # reminders: one "went quiet" ping, then nothing until "recovered".
+          HEALTH_REMINDER_HOURS: "0"
         run: python bujairami_monitor.py --once
 
       - name: Commit updated state and log

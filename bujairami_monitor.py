@@ -65,8 +65,9 @@ CONFIG = {
     "state_file": deep_check.data_path("bujairami_state.json"),    # snapshot of last run
     "event_log": deep_check.data_path("bujairami_events.log"),     # append-only log of alerts
     "health_file": deep_check.data_path("bujairami_health.json"),  # tracks up/down so we alert once
-    # Re-ping if still down this long. The GitHub copy sets 24 because it can
-    # be blocked (403) for days.
+    # Re-ping if still down this long. 0 = never re-ping (one "went quiet",
+    # then nothing until "recovered"). The GitHub copy sets 0 because it can be
+    # blocked (403) for days.
     "health_reminder_hours": float(os.environ.get("HEALTH_REMINDER_HOURS", "6")),
     "request_delay_sec": 2.0,                  # polite pause between pages
     "check_interval_min": 1,                  # watch-mode loop interval
@@ -611,7 +612,8 @@ def _fmt_minutes(m):
 
 def report_unhealthy(reason):
     """Record a failed/blocked/empty cycle. Discord only hears about it once the
-    outage has lasted health_alert_after_min, then every health_reminder_hours."""
+    outage has lasted health_alert_after_min, then every health_reminder_hours
+    (never again if that is 0)."""
     h = load_health()
     now = time.time()
     if h.get("status") != "down":
@@ -622,8 +624,9 @@ def report_unhealthy(reason):
     down_min = (now - h.get("down_since", now)) / 60
 
     first_alert = not h.get("alerted") and down_min >= CONFIG["health_alert_after_min"]
-    reminder = h.get("alerted") and \
-        (now - h.get("last_alert", 0)) >= CONFIG["health_reminder_hours"] * 3600
+    remind_after = CONFIG["health_reminder_hours"] * 3600
+    reminder = remind_after > 0 and h.get("alerted") and \
+        (now - h.get("last_alert", 0)) >= remind_after
     if first_alert or reminder:
         subject = "Bujairami monitor went quiet" if first_alert else \
                   "Bujairami monitor still down"

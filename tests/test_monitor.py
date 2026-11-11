@@ -794,6 +794,24 @@ class HealthTests(Base):
         bm.report_unhealthy("x")
         self.assertEqual(self.notify.call_count, 2)
 
+    def test_reminder_hours_zero_means_no_reminders(self):
+        bm.CONFIG["health_reminder_hours"] = 0.0
+        self.at(0)
+        bm.report_unhealthy("x")
+        self.at(61)
+        bm.report_unhealthy("x")
+        self.assertEqual(self.notify.call_count, 1)
+        self.assertEqual(self.notify.call_args[0][0], "Bujairami monitor went quiet")
+        for minutes in (62, 61 + 6 * 60, 61 + 24 * 60, 61 + 30 * 24 * 60):
+            self.at(minutes)
+            bm.report_unhealthy("x")
+        self.assertEqual(self.notify.call_count, 1)
+        # Muted reminders must not mute the recovery ping.
+        self.at(61 + 30 * 24 * 60 + 5)
+        bm.report_healthy(115, 115)
+        self.assertEqual(self.notify.call_count, 2)
+        self.assertEqual(self.notify.call_args[0][0], "Bujairami monitor recovered")
+
     def test_recovered_ping_only_if_a_quiet_ping_was_sent(self):
         self.at(0)
         bm.report_unhealthy("x")

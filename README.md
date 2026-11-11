@@ -53,8 +53,8 @@ touches the root files.
 - Times in the event log are Pacific (set via `TZ` in the workflow).
 - **Health ping:** if checks keep failing (blocked, empty, or partial) for 60+
   minutes, the bot sends a Discord "went quiet" alert (again every 6 hours if it
-  stays down, every 24 hours on GitHub), then a "recovered" alert when checks
-  work again. Shorter blips just get one line in the event log with the actual
+  stays down; the GitHub copy sends no reminders), then a "recovered" alert when
+  checks work again. Shorter blips just get one line in the event log with the actual
   error. State for this lives in `bujairami_health.json`. This is so silence
   never gets mistaken for "nothing in stock."
 - **Anti-flap:** a product that drops out of the listing for a run is kept in
@@ -71,7 +71,7 @@ Set these in `monitor.yml` for GitHub, or as environment variables on the PC.
 | Variable | Default | What it does |
 |---|---|---|
 | `HEALTH_ALERT_AFTER_MIN` | 60 | Minutes of failed checks before a Discord "went quiet" ping (0 = old behavior) |
-| `HEALTH_REMINDER_HOURS` | 6 | Hours between "still down" reminders. `monitor.yml` sets 24, since GitHub can be blocked for days |
+| `HEALTH_REMINDER_HOURS` | 6 | Hours between "still down" reminders (0 = none). `monitor.yml` sets 0, since GitHub can be blocked for days |
 | `MISSING_GRACE_HOURS` | 48 | How long a product can be missing from the listing before it's forgotten |
 | `SOLDOUT_CONFIRM_RUNS` | 2 | Runs in a row a product must read sold out before it counts (1 = old behavior) |
 | `DEEP_CHECK_BATCH` | 8 (`monitor.yml` sets 12) | Product pages deep-checked per run (watchlist + rotation) |
@@ -122,5 +122,5 @@ Non-watchlist verdicts are cached for `VERIFY_CACHE_MIN` (5) minutes.
 
 - GitHub runs on Azure datacenter IPs, and FragranceNet currently answers them
   with 403. The script fails safe (skips a cycle rather than sending false
-  alerts) and the health ping reports it once a day. The PC on a home IP is the
+  alerts) and the health ping reports it once. The PC on a home IP is the
   reliable copy.
