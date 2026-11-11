@@ -80,6 +80,10 @@ RETRY_MAX = float(os.environ.get("DEEP_CHECK_RETRY_MAX", "2.0"))
 # can't push a GitHub Actions run past the next 5 minute slot.
 BUDGET_SEC = float(os.environ.get("DEEP_CHECK_BUDGET_SEC", "180"))
 REFERER = "https://www.fragrancenet.com/fragrances/bujairami"
+# verify_changes(): a product page verdict younger than this is reused for
+# non-watchlist products instead of fetching the page again.
+VERIFY_CACHE_MIN = float(os.environ.get("VERIFY_CACHE_MIN", "5"))
+VERIFY_BUDGET_SEC = float(os.environ.get("VERIFY_BUDGET_SEC", "150"))
 
 SOFT_404_PAT = re.compile(r"<title>\s*page not found", re.I)
 
@@ -436,10 +440,20 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
             products[key]["in_stock"] = True
             products[key]["deep_verified"] = True
 
-    # Listing itself says in stock, so it is authoritative again. Drop the entry.
+    # Listing itself says in stock, so the sticky "in" verdict isn't needed any
+    # more. Drop it. ("out" verdicts are kept: verify_changes() reuses them.)
     for key, prod in products.items():
-        if prod.get("in_stock") and not prod.get("deep_verified"):
+        if prod.get("in_stock") and not prod.get("deep_verified") \
+                and items.get(key, {}).get("stock") == "in":
             items.pop(key, None)
+
+    # Forget verdicts for products that left the site a week+ ago (Vice City,
+    # Imperial Oud, etc. were sitting here for 40 days). Recent ones are kept
+    # so a product that blinks out of the listing keeps its verdict.
+    cutoff = time.time() - 7 * 86400
+    for key in [k for k, v in items.items()
+                if k not in products and v.get("checked", 0) < cutoff]:
+        items.pop(key, None)
 
     # If the sweep stopped early (block or time budget), resume rotation right
     # after the last product we actually got to instead of skipping ahead.
@@ -449,6 +463,69 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
     deep["cursor"] = next_cursor
     save_deep(deep)
     return restocked, blocked
+
+
+def verify_changes(session, old, products, patterns=None, log=print, started=None):
+    """
+    The listing is served by several FragranceNet servers that don't agree on
+    stock. In Nov 2026 Tea Splash read "in stock" on about 30% of listing loads
+    after it sold out, while its product page said sold out 8 times out of 8.
+    So the product page decides, in both directions, for:
+      - every watchlist product, every run
+      - any product whose listing stock differs from the saved state
+      - new listings
+    Sets in_stock from the page and marks page_verified. Returns blocked_bool.
+    """
+    patterns = load_watchlist() if patterns is None else patterns
+    deep = load_deep()
+    items = deep["items"]
+    now = time.time()
+    started = now if started is None else started
+
+    todo = []
+    for key, prod in products.items():
+        prev = old.get(key)
+        watch = on_watchlist(key, prod, patterns)
+        changed = prev is None or bool(prev.get("in_stock")) != bool(prod.get("in_stock"))
+        if watch or changed:
+            todo.append((0 if watch else 1, key, watch))
+    todo.sort()
+
+    t0, fetched, blocked = time.time(), 0, False
+    for _, key, watch in todo:
+        prod = products[key]
+        entry = items.get(key, {})
+        checked_at = entry.get("checked", 0)
+        if entry.get("stock") in ("in", "out") and (
+                checked_at >= int(started) or
+                (not watch and now - checked_at < VERIFY_CACHE_MIN * 60)):
+            verdict = entry["stock"] == "in"   # checked this run, or recently
+        else:
+            if time.time() - t0 > VERIFY_BUDGET_SEC:
+                log(f"  verify: time budget used up, rest keep the listing's answer")
+                break
+            if fetched:
+                time.sleep(random.uniform(MIN_DELAY, MAX_DELAY))
+            state, reason, status = check_product(session, prod.get("url", ""))
+            fetched += 1
+            if status in (403, 429):
+                blocked = True
+                log("  verify: blocked, stopping")
+                break
+            if state is None:
+                log(f"  verify: {prod.get('name', key)[:42]} -> unknown ({reason})")
+                continue
+            items[key] = {"stock": "in" if state else "out", "checked": int(time.time())}
+            verdict = state
+        if bool(verdict) != bool(prod.get("in_stock")):
+            log(f"  verify: {prod.get('name', key)[:42]}: listing says "
+                f"{'in' if prod.get('in_stock') else 'out'}, product page says "
+                f"{'in' if verdict else 'out'}")
+        prod["in_stock"] = bool(verdict)
+        prod["page_verified"] = True
+
+    save_deep(deep)
+    return blocked
 
 
 # ---------------------------------------------------------------- probe CLI

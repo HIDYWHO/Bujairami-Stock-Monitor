@@ -1,6 +1,15 @@
 name: Bujairami Stock Monitor
 
 on:
+  # A code push runs a check right away, so a fix is live (and proven) in
+  # about a minute. The bot's own state commits don't match these paths.
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'bujairami_watchlist.json'
+      - '.github/workflows/**'
   schedule:
     - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
@@ -12,16 +21,23 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Default is 6 hours. A hung run would hold the concurrency lock that long.
+    timeout-minutes: 10
     permissions:
       contents: write
     env:
       TZ: America/Los_Angeles
     steps:
+      # ref = branch name, so a run that sat in the queue checks out the LATEST
+      # state the previous run pushed, not the snapshot from when it was queued.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -40,5 +56,8 @@ jobs:
           [ -f bujairami_events.log ] && git add bujairami_events.log || true
           [ -f bujairami_health.json ] && git add bujairami_health.json || true
           [ -f bujairami_deep.json ] && git add bujairami_deep.json || true
-          git diff --staged --quiet || git commit -m "update state"
-          git push
+          git diff --staged --quiet && exit 0
+          git commit -m "update state"
+          # If something else pushed in the meantime, rebase onto it and retry
+          # instead of failing and losing this run's state.
+          git push || (git pull --rebase && git push)

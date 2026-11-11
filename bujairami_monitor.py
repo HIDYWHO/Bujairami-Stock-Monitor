@@ -66,6 +66,31 @@ CONFIG = {
     "check_interval_min": 1,                  # watch-mode loop interval
     "max_pages": 15,                           # safety cap on pagination
 
+    # A product missing from one scrape is kept for this long before it's
+    # dropped. Stops the "NEW LISTING" spam when a tile blinks out of the
+    # listing for a cycle and comes back (Madness / Fairy Dust / Breezy).
+    "missing_grace_hours": float(os.environ.get("MISSING_GRACE_HOURS", "48")),
+    # A product has to read sold out this many runs in a row before it counts
+    # as sold out. One-run blips no longer arm a fake BACK IN STOCK alert.
+    "soldout_confirm_runs": int(os.environ.get("SOLDOUT_CONFIRM_RUNS", "2")),
+    # Only ping Discord about an outage once it has lasted this long.
+    # Half the outages in the log cleared on the very next run.
+    "health_alert_after_min": float(os.environ.get("HEALTH_ALERT_AFTER_MIN", "60")),
+    # FragranceNet's backend servers fall out of sync after a restock: one
+    # page comes from the new catalog, the next from the old one. Each page
+    # says how many products its server thinks exist ("numOfResults"), so a
+    # page that disagrees with the highest total is stale and gets re-fetched
+    # up to this many times. (Nov 2026: page 5 kept coming back as the old
+    # 103-product version, so 12 new releases were never seen.)
+    "stale_page_retries": int(os.environ.get("STALE_PAGE_RETRIES", "8")),
+    # Don't send BACK IN STOCK for the same product again within this window.
+    # Stops the Dubai Crush style repeat pings every 20 minutes. 0 = off.
+    "back_alert_cooldown_min": float(os.environ.get("BACK_ALERT_COOLDOWN_MIN", "120")),
+    # Stops two copies of the monitor on one PC from running at the same time
+    # (watch mode + Task Scheduler) and stepping on each other's state file.
+    "lock_file": "bujairami.lock",
+    "lock_stale_min": 15,
+
     # --- Email alerts (Gmail example). Use a Gmail "App Password", not your
     #     normal password: https://myaccount.google.com/apppasswords
     #     Activates automatically once a username AND password are set (here or
@@ -154,12 +179,15 @@ def fetch_page(session, page):
     url = CONFIG["brand_url"] if page == 1 else f'{CONFIG["brand_url"]}?page={page}'
     resp = session.get(url, timeout=30)
     resp.raise_for_status()
-    text = resp.text
-    # Cheap block detection: real pages contain product links / the brand name.
-    low = text.lower()
-    if "bujairami" not in low or "access denied" in low or "captcha" in low:
-        raise RuntimeError("page did not look like a normal listing (possible block)")
-    return text
+    return resp.text
+
+
+def looks_blocked(html):
+    """Only consulted when a page has NO products. A normal page that happens to
+    mention "captcha" somewhere (a reCAPTCHA script, a footer form) still has
+    product tiles, so it should never be thrown out over that word."""
+    low = html.lower()
+    return "bujairami" not in low or "access denied" in low or "captcha" in low
 
 
 # ==========================================================================
@@ -243,23 +271,130 @@ def parse_products(html):
     return products
 
 
-def scrape_all(session):
-    """Walk every listing page. Returns (products_dict, healthy_bool).
-    healthy=False means the scrape was incomplete and state must NOT be saved."""
+PAGINATION_RE = re.compile(
+    r'"pagination"\s*:\s*\{[^}]*?"numOfResultsPerPage"\s*:\s*(\d+)'
+    r'[^}]*?"numOfResults"\s*:\s*(\d+)'
+)
+
+
+def page_info(html):
+    """(site_total, per_page) from the page's own pagination data, or None.
+    The total is what THAT server thinks the brand has, which is how a stale
+    page gives itself away."""
+    m = PAGINATION_RE.search(html)
+    if not m:
+        return None
+    per_page, total = int(m.group(1)), int(m.group(2))
+    return (total, per_page) if per_page > 0 else None
+
+
+def scrape_all(session, meta=None):
+    """Walk every listing page. Returns (products_dict, healthy_bool, reason).
+    healthy=False means the scrape was incomplete and state must NOT be saved.
+    reason says what actually went wrong, so the log tells you something.
+    If a dict is passed as meta, it's filled with site_total / stale_pages."""
+    meta = {} if meta is None else meta
+    try:
+        html1 = fetch_page(session, 1)
+    except Exception as e:
+        log(f"[warn] failed to fetch page 1: {e}")
+        return {}, False, f"page 1 fetch failed: {str(e)[:150]}"
+    if page_info(html1) is None:
+        log("[warn] no pagination data on page 1, using the old page walk.")
+        return _scrape_walk(session, html1)
+    return _scrape_consistent(session, html1, meta)
+
+
+def _scrape_consistent(session, html1, meta):
+    """Fetch pages 1..N, then re-fetch any page whose server reports a lower
+    product total than the newest one seen, until every page agrees."""
+    pages = {1: html1}
+    totals = {1: page_info(html1)[0]}
+    per_page = page_info(html1)[1]
+    retries = max(0, CONFIG["stale_page_retries"])
+
+    def n_pages(total):
+        return max(1, min(CONFIG["max_pages"], -(-total // per_page)))
+
+    def get(page):
+        time.sleep(CONFIG["request_delay_sec"])
+        html = fetch_page(session, page)
+        info = page_info(html)
+        return html, (info[0] if info else None)
+
+    page = 2
+    try:
+        while page <= n_pages(max(totals.values())):
+            pages[page], totals[page] = get(page)
+            page += 1
+
+        stale = []
+        for attempt in range(retries + 1):
+            target = max(t for t in totals.values() if t is not None)
+            # A newer total can mean more pages than we fetched.
+            for p in range(len(pages) + 1, n_pages(target) + 1):
+                pages[p], totals[p] = get(p)
+            stale = [p for p in range(1, n_pages(target) + 1) if totals[p] != target]
+            if not stale or attempt == retries:
+                break
+            for p in stale:
+                _drop_server_pin(session)
+                pages[p], totals[p] = get(p)
+    except Exception as e:
+        log(f"[warn] failed to fetch page {page}: {e}")
+        return {}, False, f"listing page fetch failed: {str(e)[:150]}"
+
+    target = max(t for t in totals.values() if t is not None)
     all_products = {}
-    healthy = True
+    for p in range(1, n_pages(target) + 1):
+        page_products = parse_products(pages[p])
+        if not page_products:
+            if looks_blocked(pages[p]):
+                return all_products, False, f"page {p} looked like a block/captcha page"
+            if p == 1:
+                return all_products, False, "page 1 loaded but had no products (site change?)"
+        _merge_products(all_products, page_products)
+
+    meta["site_total"] = target
+    meta["stale_pages"] = stale
+    if stale:
+        log(f"[warn] page(s) {stale} still stale after {retries} retries "
+            f"(site says {target}, got {len(all_products)}).")
+    elif len(all_products) != target:
+        log(f"[warn] site says {target} products but parsed {len(all_products)}.")
+    return all_products, True, ""
+
+
+def _drop_server_pin(session):
+    """Cloudflare's load balancer sets __cflb to pin a session to one backend
+    server. If that server is the stale one, every retry hits it again (8/8 in
+    testing), which is why watch mode stayed at 103 even with retries. Dropping
+    the cookie lets the next request land on a random server."""
+    try:
+        for c in list(session.cookies):
+            if c.name == "__cflb":
+                session.cookies.clear(c.domain, c.path, c.name)
+    except Exception:
+        pass
+
+
+def _scrape_walk(session, html1):
+    """Fallback if FragranceNet drops the pagination data: walk pages until
+    one is empty or repeats."""
+    all_products = {}
     for page in range(1, CONFIG["max_pages"] + 1):
         try:
-            html = fetch_page(session, page)
+            html = html1 if page == 1 else fetch_page(session, page)
         except Exception as e:
             log(f"[warn] failed to fetch page {page}: {e}")
-            healthy = False
-            break
+            return all_products, False, f"page {page} fetch failed: {str(e)[:150]}"
 
         page_products = parse_products(html)
         if not page_products:
+            if looks_blocked(html):
+                return all_products, False, f"page {page} looked like a block/captcha page"
             if page == 1:
-                healthy = False  # page 1 empty = something is wrong
+                return all_products, False, "page 1 loaded but had no products (site change?)"
             break  # no products => end of listing
 
         before = len(all_products)
@@ -269,7 +404,7 @@ def scrape_all(session):
             break
         time.sleep(CONFIG["request_delay_sec"])
 
-    return all_products, healthy
+    return all_products, True, ""
 
 
 def _merge_products(all_products, page_products):
@@ -306,6 +441,50 @@ def save_state(products):
         log(f"[error] could not save state: {e}")
 
 
+def reconcile(old, new, now=None):
+    """Turn a raw scrape into the state we save and diff against.
+
+    1. Missing products are carried forward for missing_grace_hours instead of
+       being forgotten, so a tile that blinks out for a run doesn't come back
+       as a "NEW LISTING".
+    2. An in-stock product has to read sold out soldout_confirm_runs runs in a
+       row before it's stored as sold out, so a one-run blip can't set up a
+       fake "BACK IN STOCK" on the next run.
+    """
+    now = time.time() if now is None else now
+    grace = CONFIG["missing_grace_hours"] * 3600
+    confirm = max(1, CONFIG["soldout_confirm_runs"])
+    final = {}
+
+    for key, prod in new.items():
+        prod = dict(prod)
+        prev = old.get(key)
+        if prev and prev.get("last_back_alert"):
+            prod["last_back_alert"] = prev["last_back_alert"]
+        # A product page "sold out" is trusted right away; only a listing-only
+        # read has to repeat soldout_confirm_runs times.
+        if prev and prev.get("in_stock") and not prod.get("in_stock") \
+                and not prod.get("page_verified"):
+            streak = prev.get("out_streak", 0) + 1
+            if streak < confirm:
+                prod["in_stock"] = True        # not confirmed sold out yet
+                prod["out_streak"] = streak
+        final[key] = prod
+
+    for key, prev in old.items():
+        if key in new:
+            continue
+        since = prev.get("missing_since") or now
+        if now - since < grace:
+            kept = dict(prev)
+            kept["missing_since"] = since
+            final[key] = kept
+        else:
+            log(f"Dropped from state (gone {CONFIG['missing_grace_hours']:.0f}h+): {_display(prev)}")
+
+    return final
+
+
 def diff_states(old, new):
     new_added, back_in_stock = [], []
     for pid, prod in new.items():
@@ -338,16 +517,49 @@ def send_email(subject, body):
         log(f"[error] email failed: {e}")
 
 
+def _chunks(text, limit=1900):
+    """Split on line breaks so a big restock wave isn't cut off at 2000 chars."""
+    out, cur = [], ""
+    for line in text.split("\n"):
+        while len(line) > limit:              # absurdly long single line
+            out.append(line[:limit])
+            line = line[limit:]
+        if cur and len(cur) + 1 + len(line) > limit:
+            out.append(cur)
+            cur = line
+        else:
+            cur = f"{cur}\n{line}" if cur else line
+    if cur:
+        out.append(cur)
+    return out
+
+
 def send_discord(subject, body):
     cfg = CONFIG["discord"]
     if not cfg.get("webhook_url"):
         return
-    try:
-        content = f"**{subject}**\n{body}"[:1900]  # Discord 2000-char limit
-        requests.post(cfg["webhook_url"], json={"content": content}, timeout=20)
-        log("Discord alert sent.")
-    except Exception as e:
-        log(f"[error] discord failed: {e}")
+    parts = _chunks(f"**{subject}**\n{body}")
+    for i, part in enumerate(parts):
+        for attempt in range(3):
+            try:
+                r = requests.post(cfg["webhook_url"], json={"content": part}, timeout=20)
+            except Exception as e:
+                log(f"[error] discord failed: {e}")
+                time.sleep(2)
+                continue
+            if r.status_code == 429:          # rate limited, wait and retry
+                try:
+                    wait = float(r.json().get("retry_after", 2))
+                except Exception:
+                    wait = 2
+                time.sleep(min(wait, 15))
+                continue
+            if r.status_code >= 400:
+                log(f"[error] discord returned HTTP {r.status_code}: {r.text[:150]}")
+            break
+        if i + 1 < len(parts):
+            time.sleep(1)
+    log(f"Discord alert sent ({len(parts)} message(s)).")
 
 
 def notify(subject, body):
@@ -383,54 +595,80 @@ def save_health(h):
         log(f"[warn] could not save health file: {e}")
 
 
+def _fmt_minutes(m):
+    return f"{m:.0f} min" if m < 90 else f"{m / 60:.1f} h"
+
+
 def report_unhealthy(reason):
-    """Record a failed/blocked/empty cycle. Ping Discord on the FIRST failure
-    after a good run, then again only every health_reminder_hours if still down."""
+    """Record a failed/blocked/empty cycle. Discord only hears about it once the
+    outage has lasted health_alert_after_min, then every health_reminder_hours."""
     h = load_health()
     now = time.time()
+    if h.get("status") != "down":
+        h = {"status": "down", "fails": 0, "down_since": now,
+             "alerted": False, "last_alert": 0}
     h["fails"] = h.get("fails", 0) + 1
-    is_new_outage = h.get("status") != "down"
-    reminder_due = (now - h.get("last_alert", 0)) >= CONFIG["health_reminder_hours"] * 3600
-    if is_new_outage or reminder_due:
-        
-        log_event(f"HEALTH: monitor quiet -- {reason} (fail #{h['fails']})")
+    h["reason"] = reason
+    down_min = (now - h.get("down_since", now)) / 60
+
+    first_alert = not h.get("alerted") and down_min >= CONFIG["health_alert_after_min"]
+    reminder = h.get("alerted") and \
+        (now - h.get("last_alert", 0)) >= CONFIG["health_reminder_hours"] * 3600
+    if first_alert or reminder:
+        subject = "Bujairami monitor went quiet" if first_alert else \
+                  "Bujairami monitor still down"
+        body = (f"No good check for {_fmt_minutes(down_min)} "
+                f"({h['fails']} failed runs).\nLatest: {reason}\n"
+                "Silence right now does NOT mean nothing is in stock.")
+        notify(subject, body)
+        h["alerted"] = True
         h["last_alert"] = now
-    h["status"] = "down"
     save_health(h)
 
 
-def report_healthy(product_count):
-    """A good cycle ran. If we were previously down, ping once that it's back."""
+def report_healthy(product_count, site_total=None):
+    """A good cycle ran. Ping 'recovered' only if we pinged 'quiet' earlier;
+    short blips just get one line in the event log."""
     h = load_health()
     if h.get("status") == "down":
-        
-        log_event(f"HEALTH: monitor recovered ({product_count} products)")
-    save_health({"status": "ok", "fails": 0, "last_alert": 0})
+        down_min = (time.time() - h.get("down_since", time.time())) / 60
+        if h.get("alerted"):
+            notify("Bujairami monitor recovered",
+                   f"Back after {_fmt_minutes(down_min)} ({product_count} products).")
+        else:
+            log_event(f"HEALTH: blip, {h.get('fails', 0)} failed run(s) over "
+                      f"{_fmt_minutes(down_min)}, no alert sent. Last: {h.get('reason', '?')}")
+    save_health({"status": "ok", "fails": 0, "last_alert": 0,
+                 "products": product_count, "site_total": site_total,
+                 "checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
 
 # ==========================================================================
 # Main run logic
 # ==========================================================================
 def run_once(session):
+    run_started = time.time()
     old = load_state()
-    new, healthy = scrape_all(session)
+    meta = {}
+    new, healthy, reason = scrape_all(session, meta)
 
     if not healthy or not new:
-        log("[warn] scrape incomplete or empty; leaving previous state untouched.")
-        report_unhealthy("Scrape failed or returned no products "
-                         "(possible IP block or a change to the site).")
+        log(f"[warn] scrape incomplete or empty ({reason}); leaving state untouched.")
+        report_unhealthy(reason or "scrape returned no products")
         return
 
     # Guard against a partial scrape wiping/altering state and causing false alerts.
-    if old and len(new) < 0.5 * len(old):
-        log(f"[warn] found only {len(new)} products vs {len(old)} last time; "
+    # Carried-forward (missing) entries don't count toward "last time".
+    live_old = sum(1 for p in old.values() if not p.get("missing_since"))
+    if live_old and len(new) < 0.5 * live_old:
+        log(f"[warn] found only {len(new)} products vs {live_old} last time; "
             f"skipping this cycle to avoid false alerts.")
-        report_unhealthy(f"Only found {len(new)} products vs {len(old)} last "
+        report_unhealthy(f"Only found {len(new)} products vs {live_old} last "
                          f"time -- looks like a partial or blocked fetch.")
         return
 
     # Scrape looks healthy -- clear any prior outage (and ping if we're recovering).
-    report_healthy(len(new))
+    report_healthy(len(new), meta.get("site_total"))
 
     # The listing page can be stale: a product can read "sold out" there while
     # its own product page is purchasable. Verify sold-out items directly.
@@ -443,7 +681,17 @@ def run_once(session):
     except Exception as e:
         log(f"[error] deep check failed, continuing without it: {e}")
 
-    in_stock = sum(1 for p in new.values() if p.get("in_stock"))
+    # The listing's servers also disagree about stock, so any product whose
+    # stock looks changed (plus every watchlist item) is checked on its own
+    # product page, which is consistent. Skipped on the very first baseline.
+    if old:
+        try:
+            if deep_check.verify_changes(session, old, new, log=log, started=run_started):
+                log("[warn] product page verify hit a block; rest use the listing.")
+        except Exception as e:
+            log(f"[error] product page verify failed, using the listing: {e}")
+
+    in_stock =sum(1 for p in new.values() if p.get("in_stock"))
 
     if not old:
         save_state(new)
@@ -454,7 +702,12 @@ def run_once(session):
             log("Currently sold out: " + ", ".join(sold))
         return
 
-    new_added, back = diff_states(old, new)
+    final = reconcile(old, new)
+    new_added, back = diff_states(old, final)
+    back = _apply_back_cooldown(back)
+    if meta.get("stale_pages"):
+        log_event(f"SCRAPE: site says {meta['site_total']} products, got {len(new)}; "
+                  f"page(s) {meta['stale_pages']} stayed stale after retries.")
     if new_added or back:
         lines = []
         if back:
@@ -471,9 +724,64 @@ def run_once(session):
                    f"{len(new_added)} new listing(s)")
         notify(subject, "\n".join(lines))
     else:
-        log(f"No changes. {len(new)} products, {in_stock} in stock.")
+        site = f" (site says {meta['site_total']})" if meta.get("site_total") else ""
+        log(f"No changes. {len(new)} products{site}, {in_stock} in stock.")
 
-    save_state(new)
+    save_state(final)
+
+
+def _apply_back_cooldown(back, now=None):
+    """Drop BACK IN STOCK alerts for products we already pinged inside the
+    cooldown window, and stamp the ones we do send."""
+    now = time.time() if now is None else now
+    cool = CONFIG["back_alert_cooldown_min"] * 60
+    kept = []
+    for p in back:
+        last = p.get("last_back_alert", 0)
+        if cool > 0 and now - last < cool:
+            log(f"Skipped repeat BACK IN STOCK for {_display(p)} "
+                f"(pinged {_fmt_minutes((now - last) / 60)} ago).")
+            continue
+        p["last_back_alert"] = now
+        kept.append(p)
+    return kept
+
+
+# ==========================================================================
+# Single-instance lock (local PC only; GitHub Actions has its own concurrency)
+# ==========================================================================
+def acquire_lock():
+    path = CONFIG["lock_file"]
+    try:
+        if os.path.exists(path) and \
+                time.time() - os.path.getmtime(path) > CONFIG["lock_stale_min"] * 60:
+            os.remove(path)  # left behind by a crashed run
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+    except Exception as e:
+        log(f"[warn] lock problem, running anyway: {e}")
+        return True
+
+
+def release_lock():
+    try:
+        os.remove(CONFIG["lock_file"])
+    except Exception:
+        pass
+
+
+def run_locked(session):
+    if not acquire_lock():
+        log("Another copy of the monitor is mid-check; skipping this run.")
+        return
+    try:
+        run_once(session)
+    finally:
+        release_lock()
 
 
 def main():
@@ -494,13 +802,13 @@ def main():
         return
 
     if args.once:
-        run_once(session)
+        run_locked(session)
         return
 
     log(f"Watch mode: checking every {args.interval} min. Press Ctrl+C to stop.")
     while True:
         try:
-            run_once(session)
+            run_locked(session)
         except KeyboardInterrupt:
             log("Stopped by user.")
             break
