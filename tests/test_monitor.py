@@ -156,6 +156,77 @@ class ScrapeAllTests(Base):
         self.assertEqual(len(prods), 10)
         self.assertIn("still stale", self.output())
 
+    def _sorted_url(self, sort, page):
+        base = bm.CONFIG["brand_url"]
+        return "%s?sort=%s" % (base, sort) + ("&page=%d" % page if page > 1 else "")
+
+    def test_fetch_page_builds_sort_urls(self):
+        s = FakeSession()
+        for args in ((1, None), (2, None), (1, "new"), (3, "name")):
+            try:
+                bm.fetch_page(s, *args)
+            except Exception:
+                pass   # unrouted -> 500; only the URL matters here
+        base = bm.CONFIG["brand_url"]
+        self.assertEqual(s.calls, [base, base + "?page=2", base + "?sort=new",
+                                   base + "?sort=name&page=3"])
+
+    def test_stuck_page_is_filled_in_from_another_sort_order(self):
+        bm.CONFIG["stale_page_retries"] = 1
+        new = make_catalog(12)
+        old = new[:9]                      # page 2 stuck on the old catalog
+        by_new = list(reversed(new))       # the same 12 in "new" order
+        routes = {listing_url(1): serve(new, 1, 5), listing_url(2): serve(old, 2, 5),
+                  listing_url(3): serve(new, 3, 5)}
+        for p in (1, 2, 3):
+            routes[self._sorted_url("new", p)] = serve(by_new, p, 5)
+        s = FakeSession(routes)
+        meta = {}
+        prods, healthy, reason = bm.scrape_all(s, meta)
+        self.assertTrue(healthy, reason)
+        self.assertEqual(len(prods), 12)
+        self.assertIn(self.key("bujairami-p009"), prods)
+        self.assertEqual(meta["stale_pages"], [])
+        self.assertEqual(meta["filled_from"], ["new"])
+        self.assertEqual(s.misses, [])
+        self.assertFalse(any("sort=name" in u for u in s.calls))   # stopped once full
+        self.assertIn("Filled in 1 product(s) from sort=new", self.output())
+
+    def test_fill_in_skips_stale_sort_pages_and_tries_the_next_sort(self):
+        bm.CONFIG["stale_page_retries"] = 0
+        bm.CONFIG["fill_in_tries"] = 2
+        new = make_catalog(12)
+        old = new[:9]
+        by_name = list(reversed(new))
+        routes = {listing_url(1): serve(new, 1, 5), listing_url(2): serve(old, 2, 5),
+                  listing_url(3): serve(new, 3, 5)}
+        for p in (1, 2, 3):
+            routes[self._sorted_url("new", p)] = serve(old, p, 5)      # stale too
+            routes[self._sorted_url("name", p)] = serve(by_name, p, 5)
+        s = FakeSession(routes)
+        meta = {}
+        prods, healthy, _ = bm.scrape_all(s, meta)
+        self.assertTrue(healthy)
+        self.assertEqual(len(prods), 12)
+        self.assertEqual(meta["filled_from"], ["name"])
+        self.assertEqual(s.counts[self._sorted_url("new", 1)], 2)        # fill_in_tries
+        self.assertEqual(meta["stale_pages"], [])
+
+    def test_fill_in_failure_keeps_the_scrape_healthy_and_reports_stale(self):
+        bm.CONFIG["stale_page_retries"] = 1
+        new = make_catalog(12)
+        old = new[:9]
+        s = listing_session({1: serve(new, 1, 5), 2: serve(old, 2, 5), 3: serve(new, 3, 5)})
+        meta = {}
+        prods, healthy, reason = bm.scrape_all(s, meta)   # sort URLs unrouted -> 500
+        self.assertTrue(healthy, reason)
+        self.assertEqual(len(prods), 11)
+        self.assertEqual(meta["stale_pages"], [2])
+        self.assertNotIn("filled_from", meta)
+        # One failed request per sort order, then it gives up on that sort.
+        self.assertEqual(len([u for u in s.misses if "sort=" in u]), 2)
+        self.assertIn("fill-in with sort=new failed", self.output())
+
     def test_newer_total_on_a_later_page_pulls_in_the_extra_page(self):
         new = make_catalog(12)
         old = new[:9]

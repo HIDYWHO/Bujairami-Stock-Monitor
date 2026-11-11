@@ -90,6 +90,12 @@ CONFIG = {
     # up to this many times. (Nov 2026: page 5 kept coming back as the old
     # 103-product version, so 12 new releases were never seen.)
     "stale_page_retries": int(os.environ.get("STALE_PAGE_RETRIES", "8")),
+    # If retries still leave the scrape short of the site total, fetch the
+    # listing again in these sort orders (FragranceNet's ?sort= values) and add
+    # whatever was missing. Only runs on a short scrape.
+    "fill_in_sorts": [s.strip() for s in
+                      os.environ.get("FILL_IN_SORTS", "new,name").split(",") if s.strip()],
+    "fill_in_tries": int(os.environ.get("FILL_IN_TRIES", "3")),
     # Don't send BACK IN STOCK for the same product again within this window.
     # Stops the Dubai Crush style repeat pings every 20 minutes. 0 = off.
     "back_alert_cooldown_min": float(os.environ.get("BACK_ALERT_COOLDOWN_MIN", "120")),
@@ -187,8 +193,9 @@ def make_session():
     return session
 
 
-def fetch_page(session, page):
-    url = CONFIG["brand_url"] if page == 1 else f'{CONFIG["brand_url"]}?page={page}'
+def fetch_page(session, page, sort=None):
+    params = ([f"sort={sort}"] if sort else []) + ([f"page={page}"] if page > 1 else [])
+    url = CONFIG["brand_url"] + ("?" + "&".join(params) if params else "")
     resp = session.get(url, timeout=30)
     resp.raise_for_status()
     return resp.text
@@ -368,6 +375,17 @@ def _scrape_consistent(session, html1, meta):
         _merge_products(all_products, page_products)
 
     meta["site_total"] = target
+    # Skip when max_pages is what cut the scrape short: other sort orders hit
+    # the same cap, so they'd only cost requests.
+    if len(all_products) < target and -(-target // per_page) <= CONFIG["max_pages"]:
+        short = len(all_products)
+        filled = _fill_in_from_sorts(session, all_products, target, per_page)
+        if filled:
+            meta["filled_from"] = filled
+            log(f"Filled in {len(all_products) - short} product(s) from sort="
+                f"{','.join(filled)}; now {len(all_products)}/{target}.")
+        if stale and len(all_products) >= target:
+            stale = []  # healed: every product the site lists was found
     meta["stale_pages"] = stale
     if stale:
         log(f"[warn] page(s) {stale} still stale after {retries} retries "
@@ -375,6 +393,39 @@ def _scrape_consistent(session, html1, meta):
     elif len(all_products) != target:
         log(f"[warn] site says {target} products but parsed {len(all_products)}.")
     return all_products, True, ""
+
+
+def _fill_in_from_sorts(session, all_products, target, per_page):
+    """Some pages stay stale no matter how often they're retried (2026-11-11:
+    page 2 came back with the old 115-product catalog 20 times out of 20 while
+    the site had 126, hiding 2 products). The same listing in another sort order
+    puts those products on different pages, which came back fresh on the first
+    try. Only pages reporting the full site total are used. Adds to
+    all_products in place; returns the sort orders that added something."""
+    used = []
+    tries = max(1, CONFIG["fill_in_tries"])
+    n = max(1, min(CONFIG["max_pages"], -(-target // per_page)))
+    for sort in CONFIG["fill_in_sorts"]:
+        if len(all_products) >= target:
+            break
+        before = len(all_products)
+        try:
+            for p in range(1, n + 1):
+                for _ in range(tries):
+                    _drop_server_pin(session)
+                    time.sleep(CONFIG["request_delay_sec"])
+                    html = fetch_page(session, p, sort)
+                    info = page_info(html)
+                    if info and info[0] == target:
+                        _merge_products(all_products, parse_products(html))
+                        break
+                if len(all_products) >= target:
+                    break
+        except Exception as e:
+            log(f"[warn] fill-in with sort={sort} failed: {str(e)[:150]}")
+        if len(all_products) > before:
+            used.append(sort)
+    return used
 
 
 def _drop_server_pin(session):
