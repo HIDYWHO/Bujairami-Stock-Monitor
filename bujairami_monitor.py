@@ -7,9 +7,10 @@ Watches the FragranceNet Bujairami brand page and alerts you when:
   1. A product comes BACK IN STOCK (was "Sold Out!", now buyable), or
   2. A NEW Bujairami listing is ADDED to the site.
 
-It does NOT run on Anthropic's servers. You run it on any always-on machine
-(your PC, a Raspberry Pi, or a cheap VPS). It stores a snapshot in a JSON file
-and compares each run against the previous one.
+The main copy runs on my PC (Task Scheduler + watch mode). GitHub Actions runs
+a best-effort backup copy. It stores a snapshot in a JSON file (in local_data/
+on a PC, the repo root on Actions) and compares each run against the previous
+one.
 
 --------------------------------------------------------------------------
 QUICK START
@@ -42,6 +43,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import smtplib
 import sys
 import time
@@ -56,12 +58,16 @@ import deep_check
 # ==========================================================================
 # CONFIG  -- edit these, or set the matching environment variables
 # ==========================================================================
+# State files live in deep_check.data_dir(): local_data/ on a PC, the repo
+# root on GitHub Actions (see deep_check.data_dir for why).
 CONFIG = {
     "brand_url": "https://www.fragrancenet.com/fragrances/bujairami",
-    "state_file": "bujairami_state.json",      # snapshot of last run
-    "event_log": "bujairami_events.log",       # append-only log of alerts
-    "health_file": "bujairami_health.json",    # tracks up/down so we alert once
-    "health_reminder_hours": 6,                # re-ping if still down this long
+    "state_file": deep_check.data_path("bujairami_state.json"),    # snapshot of last run
+    "event_log": deep_check.data_path("bujairami_events.log"),     # append-only log of alerts
+    "health_file": deep_check.data_path("bujairami_health.json"),  # tracks up/down so we alert once
+    # Re-ping if still down this long. The GitHub copy sets 24 because it can
+    # be blocked (403) for days.
+    "health_reminder_hours": float(os.environ.get("HEALTH_REMINDER_HOURS", "6")),
     "request_delay_sec": 2.0,                  # polite pause between pages
     "check_interval_min": 1,                  # watch-mode loop interval
     "max_pages": 15,                           # safety cap on pagination
@@ -88,7 +94,7 @@ CONFIG = {
     "back_alert_cooldown_min": float(os.environ.get("BACK_ALERT_COOLDOWN_MIN", "120")),
     # Stops two copies of the monitor on one PC from running at the same time
     # (watch mode + Task Scheduler) and stepping on each other's state file.
-    "lock_file": "bujairami.lock",
+    "lock_file": deep_check.data_path("bujairami.lock"),
     "lock_stale_min": 15,
 
     # --- Email alerts (Gmail example). Use a Gmail "App Password", not your
@@ -117,6 +123,11 @@ CONFIG = {
         "webhook_url": os.environ.get("BUJAIRAMI_DISCORD_WEBHOOK", ""),
     },
 }
+
+# The PC and GitHub copies post to the same Discord channel, so every alert
+# says which one sent it.
+RUNNER = os.environ.get("BUJAIRAMI_RUNNER", "") or \
+    ("GitHub" if os.environ.get("GITHUB_ACTIONS") == "true" else "PC")
 
 HEADERS = {
     "User-Agent": (
@@ -435,8 +446,7 @@ def load_state():
 
 def save_state(products):
     try:
-        with open(CONFIG["state_file"], "w", encoding="utf-8") as f:
-            json.dump(products, f, indent=2)
+        deep_check.write_json_atomic(CONFIG["state_file"], products)
     except Exception as e:
         log(f"[error] could not save state: {e}")
 
@@ -563,6 +573,7 @@ def send_discord(subject, body):
 
 
 def notify(subject, body):
+    subject = f"{subject} [{RUNNER}]"
     log(f"ALERT: {subject}")
     print(body)
     log_event(subject + "\n" + body)
@@ -589,8 +600,7 @@ def load_health():
 
 def save_health(h):
     try:
-        with open(CONFIG["health_file"], "w", encoding="utf-8") as f:
-            json.dump(h, f, indent=2)
+        deep_check.write_json_atomic(CONFIG["health_file"], h)
     except Exception as e:
         log(f"[warn] could not save health file: {e}")
 
@@ -774,11 +784,54 @@ def release_lock():
         pass
 
 
+def ensure_data_dir():
+    """The lock file lives in the data dir, so it has to exist first."""
+    base = deep_check.data_dir()
+    if base:
+        try:
+            os.makedirs(base, exist_ok=True)
+        except Exception as e:
+            log(f"[warn] could not create data dir {base}: {e}")
+
+
+# Older PC installs kept live state in the git-tracked root files. Copied
+# (not moved, they're tracked) so the first run in local_data/ isn't a fresh
+# baseline. The state file goes last: if the copy dies part way, there's still
+# no state file in the data dir and the next run tries again.
+MIGRATE_FILES = ("bujairami_deep.json", "bujairami_health.json",
+                 "bujairami_events.log", "bujairami_state.json")
+
+
+def migrate_root_state():
+    """One-time copy of root-level state into the data dir. Never raises."""
+    base = deep_check.data_dir()
+    try:
+        if not base or os.path.exists(CONFIG["state_file"]) \
+                or not os.path.exists("bujairami_state.json"):
+            return
+        copied = []
+        for name in MIGRATE_FILES:
+            dst = os.path.join(base, name)
+            # Never overwrite something the new location already has.
+            if not os.path.exists(name) or os.path.exists(dst):
+                continue
+            # Copy to a temp name and swap in, so a killed copy can't leave a
+            # half-written state file behind.
+            shutil.copy2(name, dst + ".tmp")
+            os.replace(dst + ".tmp", dst)
+            copied.append(name)
+        log(f"Copied old root-level state into {base}/: {', '.join(copied)}")
+    except Exception as e:
+        log(f"[warn] could not copy old state into {base}/, continuing: {e}")
+
+
 def run_locked(session):
+    ensure_data_dir()
     if not acquire_lock():
         log("Another copy of the monitor is mid-check; skipping this run.")
         return
     try:
+        migrate_root_state()
         run_once(session)
     finally:
         release_lock()
@@ -797,6 +850,7 @@ def main():
     session = make_session()
 
     if args.test_notify:
+        ensure_data_dir()  # the event log lives there
         notify("Bujairami monitor test",
                "If you can read this, your notifications are working.")
         return

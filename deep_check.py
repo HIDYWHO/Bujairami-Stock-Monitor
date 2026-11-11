@@ -48,6 +48,7 @@ import json
 import os
 import random
 import re
+import tempfile
 import time
 
 import requests
@@ -59,6 +60,56 @@ except ImportError:
     cloudscraper = None
 
 
+# ---------------------------------------------------------------- data files
+
+def data_dir():
+    """Folder for the bot's live state files. On a PC this is local_data/, so
+    the PC never dirties the git-tracked copies the GitHub bot commits (that
+    kept the PC hundreds of commits behind and blocked code pushes). On
+    GitHub Actions it stays the repo root, because the workflow commits the
+    root-level files. BUJAIRAMI_DATA_DIR overrides both."""
+    base = os.environ.get("BUJAIRAMI_DATA_DIR", "")
+    if base:
+        return base
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return ""
+    return "local_data"
+
+
+def data_path(name):
+    base = data_dir()
+    return os.path.join(base, name) if base else name
+
+
+def write_json_atomic(path, data, tries=5, delay=0.5):
+    """Write JSON to a temp file next to path, then swap it in with
+    os.replace(). A run killed mid-write leaves the old file intact instead of
+    a truncated one (which load_state() reads as "start a fresh baseline").
+    On Windows os.replace() fails with PermissionError while another process
+    has the target open, so that is retried. Raises on final failure; the temp
+    file is always cleaned up."""
+    folder = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(prefix=os.path.basename(path) + ".", suffix=".tmp",
+                               dir=folder)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        for attempt in range(tries):
+            try:
+                os.replace(tmp, path)
+                return
+            except PermissionError:
+                if attempt + 1 >= tries:
+                    raise
+                time.sleep(delay)
+    finally:
+        if os.path.exists(tmp):
+            try:
+                os.remove(tmp)
+            except Exception:
+                pass
+
+
 # ---------------------------------------------------------------- settings
 
 DEEP_BATCH = int(os.environ.get("DEEP_CHECK_BATCH", "8"))
@@ -67,7 +118,8 @@ MIN_DELAY = float(os.environ.get("DEEP_CHECK_MIN_DELAY", "1.5"))
 MAX_DELAY = float(os.environ.get("DEEP_CHECK_MAX_DELAY", "3.5"))
 TIMEOUT = int(os.environ.get("DEEP_CHECK_TIMEOUT", "25"))
 WATCHLIST_FILE = os.environ.get("DEEP_CHECK_WATCHLIST", "bujairami_watchlist.json")
-DEEP_STATE_FILE = os.environ.get("DEEP_CHECK_STATE", "bujairami_deep.json")
+# Resolved at import: load_deep()/save_deep() bind this as their default.
+DEEP_STATE_FILE = os.environ.get("DEEP_CHECK_STATE") or data_path("bujairami_deep.json")
 
 # FragranceNet's 2026 redesign (Next.js) randomly answers a real product URL
 # with a 404 "Page Not Found" roughly half the time, even for a normal browser.
@@ -305,10 +357,9 @@ def load_deep(path=DEEP_STATE_FILE):
 
 def save_deep(data, path=DEEP_STATE_FILE):
     try:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    except Exception:
-        pass
+        write_json_atomic(path, data)
+    except Exception as e:
+        print(f"[warn] could not save deep state: {e}", flush=True)
 
 
 def load_watchlist(path=WATCHLIST_FILE):
@@ -330,10 +381,12 @@ def load_watchlist(path=WATCHLIST_FILE):
 def on_watchlist(key, prod, patterns):
     if not patterns:
         return False
+    # Periods count as hyphens on both sides, the same way _key() normalizes
+    # the product key, so "drip-no.7" and "drip-no-7" match each other.
     blob = " ".join([
         key, prod.get("slug", ""), prod.get("name", ""), prod.get("concentration", ""),
-    ]).lower()
-    return any(p in blob for p in patterns)
+    ]).lower().replace(".", "-")
+    return any(p.replace(".", "-") in blob for p in patterns)
 
 
 # ---------------------------------------------------------------- targeting
