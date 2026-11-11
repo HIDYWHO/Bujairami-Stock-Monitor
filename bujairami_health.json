@@ -1,6 +1,6 @@
 {
   "status": "down",
-  "fails": 1,
+  "fails": 2,
   "down_since": 1794396128.1829846,
   "alerted": false,
   "last_alert": 0,
