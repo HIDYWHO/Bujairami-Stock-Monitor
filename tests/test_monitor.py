@@ -698,7 +698,7 @@ class SaveHelpersTests(Base):
 class NotifyTests(Base):
     def run_notify(self, runner):
         with mock.patch.object(bm, "RUNNER", runner), \
-                mock.patch.object(bm, "send_discord") as disc, \
+                mock.patch.object(bm, "send_discord", return_value=[]) as disc, \
                 mock.patch.object(bm, "send_email") as mail:
             bm.notify("Subj", "line one\nline two")
         return disc, mail
@@ -774,6 +774,159 @@ class DiscordTests(Base):
         with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")) as post:
             bm.send_discord("S", "b")
         self.assertEqual(post.call_count, 3)
+
+    def test_delivered_alert_leaves_nothing_to_resend(self):
+        with mock.patch.object(requests, "post", return_value=FakeResp("", 204)):
+            self.assertEqual(bm.send_discord("S", "b"), [])
+        self.assertIn("Discord alert sent", self.output())
+
+    def test_failed_post_is_returned_and_never_reported_as_sent(self):
+        with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")):
+            unsent = bm.send_discord("S", "b")
+        self.assertEqual(unsent, ["**S**\nb"])
+        self.assertNotIn("Discord alert sent", self.output())
+        self.assertIn("NOT delivered", self.output())
+
+    def test_server_error_is_retried_within_the_run(self):
+        resp = [FakeResp("", 502), FakeResp("", 204)]
+        with mock.patch.object(requests, "post", side_effect=resp) as post:
+            self.assertEqual(bm.send_discord("S", "b"), [])
+        self.assertEqual(post.call_count, 2)
+
+    def test_rate_limit_that_never_clears_counts_as_unsent(self):
+        with mock.patch.object(requests, "post",
+                               return_value=FakeResp('{"retry_after": 1}', 429)) as post:
+            self.assertEqual(bm.send_discord("S", "b"), ["**S**\nb"])
+        self.assertEqual(post.call_count, 3)
+
+    def test_missing_webhook_404_is_kept_but_a_bad_request_is_not(self):
+        with mock.patch.object(requests, "post", return_value=FakeResp("gone", 404)):
+            self.assertEqual(bm.send_discord("S", "b"), ["**S**\nb"])
+        with mock.patch.object(requests, "post", return_value=FakeResp("bad", 400)):
+            self.assertEqual(bm.send_discord("S", "b"), [])
+        self.assertIn("rejected 1 of 1", self.output())
+
+    def test_stops_at_the_first_failed_part_and_returns_it_with_the_rest(self):
+        body = "\n".join("  - product %03d" % i + " x" * 30 for i in range(80))
+        parts = bm._chunks("**Big**\n" + body)
+        self.assertGreater(len(parts), 2)
+        resp = [FakeResp("", 204)] + [requests.ConnectionError("x")] * 3
+        with mock.patch.object(requests, "post", side_effect=resp) as post:
+            unsent = bm.send_discord("Big", body)
+        self.assertEqual(unsent, parts[1:])
+        self.assertEqual(post.call_count, 4)      # 1 sent, 3 tries on part 2, rest not tried
+
+
+class PendingTests(Base):
+    """Unsent Discord messages are saved and re-sent on a later run."""
+
+    def setUp(self):
+        super().setUp()
+        bm.CONFIG["discord"]["webhook_url"] = "https://discord.invalid/api/webhooks/1/x"
+        self.pending = bm.CONFIG["pending_file"]
+
+    def queue(self, *items):
+        self.write(self.pending, json.dumps(
+            [{"subject": s, "content": c, "first_tried": t} for s, c, t in items]))
+
+    def test_failed_alert_is_saved_with_its_subject_and_text(self):
+        with mock.patch.object(bm, "RUNNER", "PC"), \
+                mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")):
+            bm.notify("Subj", "body")
+        saved = self.read_json(self.pending)
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0]["subject"], "Subj [PC]")
+        self.assertEqual(saved[0]["content"], "**Subj [PC]**\nbody")
+        self.assertIn("DISCORD: not delivered", self.read(bm.CONFIG["event_log"]))
+
+    def test_delivered_alert_saves_nothing(self):
+        with mock.patch.object(requests, "post", return_value=FakeResp("", 204)):
+            bm.notify("Subj", "body")
+        self.assertFalse(os.path.exists(self.pending))
+
+    def test_test_ping_is_never_saved(self):
+        with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")):
+            bm.notify("Test", "body", queue=False)
+        self.assertFalse(os.path.exists(self.pending))
+
+    def test_retry_hours_zero_saves_nothing(self):
+        bm.CONFIG["discord_retry_hours"] = 0
+        with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")):
+            bm.notify("Subj", "body")
+        self.assertFalse(os.path.exists(self.pending))
+
+    def test_queue_keeps_only_the_newest_past_the_cap(self):
+        bm.CONFIG["pending_max"] = 3
+        bm.queue_pending("A", ["1", "2"], now=100)
+        bm.queue_pending("B", ["3", "4", "5"], now=200)
+        self.assertEqual([i["content"] for i in self.read_json(self.pending)], ["3", "4", "5"])
+        self.assertIn("dropped the 2 oldest", self.read(bm.CONFIG["event_log"]))
+
+    def test_flush_resends_oldest_first_marked_delayed_and_empties_the_queue(self):
+        now = time.time()
+        self.queue(("A [PC]", "**A [PC]**\nfirst", now - 600), ("B [PC]", "**B [PC]**\nsecond", now - 60))
+        with mock.patch.object(requests, "post", return_value=FakeResp("", 204)) as post:
+            bm.flush_pending(now=now)
+        sent = [c[1]["json"]["content"] for c in post.call_args_list]
+        self.assertEqual(len(sent), 2)
+        self.assertTrue(sent[0].startswith("_(delayed, first tried "))
+        self.assertTrue(sent[0].endswith("**A [PC]**\nfirst"))
+        self.assertTrue(sent[1].endswith("**B [PC]**\nsecond"))
+        self.assertEqual(self.read_json(self.pending), [])
+        self.assertIn("re-sent 2 delayed", self.read(bm.CONFIG["event_log"]))
+
+    def test_flush_stops_at_the_first_failure_and_keeps_the_order(self):
+        now = time.time()
+        self.queue(("A", "a", now - 60), ("B", "b", now - 30))
+        with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")) as post:
+            bm.flush_pending(now=now)
+        self.assertEqual(post.call_count, 3)      # 3 tries on A, B not attempted
+        self.assertEqual([i["subject"] for i in self.read_json(self.pending)], ["A", "B"])
+
+    def test_flush_drops_messages_older_than_the_retry_window(self):
+        now = time.time()
+        self.queue(("Old", "old", now - 25 * 3600), ("New", "new", now - 60))
+        with mock.patch.object(requests, "post", return_value=FakeResp("", 204)) as post:
+            bm.flush_pending(now=now)
+        self.assertEqual(post.call_count, 1)
+        self.assertTrue(post.call_args[1]["json"]["content"].endswith("new"))
+        self.assertIn("gave up on a message unsent for", self.read(bm.CONFIG["event_log"]))
+
+    def test_flush_drops_a_message_discord_rejects(self):
+        now = time.time()
+        self.queue(("A", "a", now - 60))
+        with mock.patch.object(requests, "post", return_value=FakeResp("bad", 400)):
+            bm.flush_pending(now=now)
+        self.assertEqual(self.read_json(self.pending), [])
+
+    def test_flush_without_a_webhook_leaves_the_queue_alone(self):
+        bm.CONFIG["discord"]["webhook_url"] = ""
+        self.queue(("A", "a", time.time()))
+        with mock.patch.object(requests, "post") as post:
+            bm.flush_pending()
+        post.assert_not_called()
+        self.assertEqual(len(self.read_json(self.pending)), 1)
+
+    def test_flush_survives_a_corrupt_queue_file(self):
+        self.write(self.pending, "{not json")
+        with mock.patch.object(requests, "post") as post:
+            bm.flush_pending()
+        post.assert_not_called()
+
+    def test_run_locked_flushes_before_the_check(self):
+        seen = []
+        with mock.patch.object(bm, "flush_pending", side_effect=lambda: seen.append("flush")), \
+                mock.patch.object(bm, "run_once", side_effect=lambda s: seen.append("run")):
+            bm.run_locked(object())
+        self.assertEqual(seen, ["flush", "run"])
+
+    def test_alert_lost_on_one_run_arrives_on_the_next(self):
+        with mock.patch.object(requests, "post", side_effect=requests.ConnectionError("x")):
+            bm.notify("Bujairami: 1 back in stock", "BACK IN STOCK:\n  - Bujairami Foo")
+        with mock.patch.object(requests, "post", return_value=FakeResp("", 204)) as post:
+            bm.flush_pending()
+        self.assertIn("Bujairami Foo", post.call_args[1]["json"]["content"])
+        self.assertEqual(self.read_json(self.pending), [])
 
 
 class ChunksTests(unittest.TestCase):

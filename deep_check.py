@@ -21,8 +21,10 @@ extra key in it would be picked up by diff_states() as a new product.
 TARGETING
     watchlist : entries in bujairami_watchlist.json, checked every cycle
     rotate    : DEEP_BATCH other sold-out products per cycle, round robin
-Default is both. Rotation resumes after the last key checked, so it survives
-products being added, removed or reordered.
+Default is both: the watchlist first, then the rest of DEEP_BATCH for the
+rotation, but never fewer than DEEP_ROTATE_MIN rotation slots. Rotation resumes
+after the last key checked, so it survives products being added, removed or
+reordered.
 
 STICKINESS
 Once a product page confirms in stock, that verdict is re-applied every cycle
@@ -114,6 +116,11 @@ def write_json_atomic(path, data, tries=5, delay=0.5):
 
 DEEP_BATCH = int(os.environ.get("DEEP_CHECK_BATCH", "8"))
 DEEP_MODE = os.environ.get("DEEP_CHECK_MODE", "both").lower()  # watchlist|rotate|both|all
+# Rotation slots every run gets in "both" mode, on top of the watchlist. Without
+# a floor, a watchlist with DEEP_BATCH or more sold-out items left the rotation
+# no room, so no other sold-out product got a product page check (2026-11-11 to
+# 11-13: 12 sold-out watchlist items against a batch of 8). 0 = no floor.
+DEEP_ROTATE_MIN = int(os.environ.get("DEEP_CHECK_ROTATE_MIN", "2"))
 MIN_DELAY = float(os.environ.get("DEEP_CHECK_MIN_DELAY", "1.5"))
 MAX_DELAY = float(os.environ.get("DEEP_CHECK_MAX_DELAY", "3.5"))
 TIMEOUT = int(os.environ.get("DEEP_CHECK_TIMEOUT", "25"))
@@ -391,9 +398,12 @@ def on_watchlist(key, prod, patterns):
 
 # ---------------------------------------------------------------- targeting
 
-def select_targets(sold_out_keys, products, patterns, cursor, batch, mode=DEEP_MODE):
+def select_targets(sold_out_keys, products, patterns, cursor, batch, mode=DEEP_MODE,
+                   rotate_min=DEEP_ROTATE_MIN):
     """
     sold_out_keys: keys the LISTING says are sold out, before stickiness.
+    In "both" mode the rotation gets what's left of the batch after the
+    watchlist, but at least rotate_min slots (capped at the batch).
     Returns (ordered list of keys to check, next_cursor).
     """
     watch = [k for k in sorted(sold_out_keys) if on_watchlist(k, products[k], patterns)]
@@ -415,7 +425,8 @@ def select_targets(sold_out_keys, products, patterns, cursor, batch, mode=DEEP_M
                 start = i
                 break
 
-    room = max(0, batch - len(watch)) if mode == "both" else batch
+    floor = min(rotate_min, batch)   # the rotation never gets more than the batch
+    room = max(0, floor, batch - len(watch)) if mode == "both" else batch
     picked = [rest[(start + i) % len(rest)] for i in range(min(room, len(rest)))]
     next_cursor = picked[-1] if picked else cursor
     return (watch + picked if mode == "both" else picked), next_cursor
@@ -424,7 +435,7 @@ def select_targets(sold_out_keys, products, patterns, cursor, batch, mode=DEEP_M
 # ---------------------------------------------------------------- main entry
 
 def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
-                    mode=DEEP_MODE, log=print):
+                    mode=DEEP_MODE, log=print, rotate_min=DEEP_ROTATE_MIN):
     """
     Call this right after scrape_all() passes its health guards, and BEFORE
     diff_states().
@@ -444,9 +455,10 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
         return [], False
 
     targets, next_cursor = select_targets(sold_out_keys, products, patterns,
-                                          deep.get("cursor", ""), batch, mode)
+                                          deep.get("cursor", ""), batch, mode,
+                                          rotate_min)
 
-    restocked, blocked = [], False
+    restocked, blocked, stopped = [], False, False
     started = time.time()
     last_rotated = None  # last non-watchlist key actually attempted
     watch_keys = {k for k in targets if on_watchlist(k, products[k], patterns)}
@@ -462,6 +474,7 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
         if time.time() - started > BUDGET_SEC:
             log(f"  deep: time budget ({BUDGET_SEC:.0f}s) used up, "
                 f"{len(targets) - i} left for next cycle")
+            stopped = True
             break
 
         if i:
@@ -473,7 +486,7 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
         log(f"  deep: {label[:42]:<42} -> {str(state):<5} ({reason})")
 
         if status in (403, 429):
-            blocked = True
+            blocked = stopped = True
             log("  deep: blocked, aborting the rest of the sweep")
             break
 
@@ -509,10 +522,11 @@ def run_deep_checks(session, products, patterns=None, batch=DEEP_BATCH,
         items.pop(key, None)
 
     # If the sweep stopped early (block or time budget), resume rotation right
-    # after the last product we actually got to instead of skipping ahead.
-    if mode != "watchlist" and last_rotated and last_rotated != next_cursor \
-            and (blocked or time.time() - started > BUDGET_SEC):
-        next_cursor = last_rotated
+    # after the last product we actually got to instead of skipping ahead. If
+    # it stopped before reaching any rotation product (the watchlist goes
+    # first), the cursor stays where it was.
+    if mode != "watchlist" and stopped:
+        next_cursor = last_rotated or deep.get("cursor", "")
     deep["cursor"] = next_cursor
     save_deep(deep)
     return restocked, blocked

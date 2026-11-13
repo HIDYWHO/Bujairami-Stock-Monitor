@@ -33,7 +33,8 @@ the script from the repo folder.
 
 - **PC:** `local_data/` in the repo folder (git-ignored). Holds
   `bujairami_state.json`, `bujairami_deep.json`, `bujairami_health.json`,
-  `bujairami_events.log` and the lock file.
+  `bujairami_events.log`, `bujairami_pending.json` (Discord messages waiting
+  to be re-sent) and the lock file.
 - **GitHub Actions:** the repo root. The workflow commits those files back
   after each run, so the next run remembers what was in stock last time.
 - `BUJAIRAMI_DATA_DIR` overrides both.
@@ -61,6 +62,16 @@ touches the root files.
   state for 48 hours, so it doesn't come back as a fake NEW LISTING. A product
   has to read sold out 2 runs in a row before it counts as sold out, so a
   one-run blip doesn't cause a fake BACK IN STOCK.
+- **Unsent alerts:** if Discord can't be reached (network down, Discord
+  errors, a rate limit that won't clear, a missing webhook), the message is
+  saved to `bujairami_pending.json` and re-sent at the start of the next run,
+  oldest first, marked "delayed". It keeps trying for 24 hours, then gives up
+  with a line in the event log. Before this, a failed post was lost for good.
+- **Product page rotation:** every run checks the product page of each
+  sold-out watchlist item, plus a rotation through the other sold-out
+  products. The rotation always gets at least 2 slots, even when the
+  watchlist fills the whole batch. (From 2026-11-11 to 11-13 it got none:
+  12 sold-out watchlist items against a batch of 8.)
 - State files are written to a temp file and then swapped in, so a run that
   gets killed mid-write can't leave a half-written file.
 
@@ -75,6 +86,8 @@ Set these in `monitor.yml` for GitHub, or as environment variables on the PC.
 | `MISSING_GRACE_HOURS` | 48 | How long a product can be missing from the listing before it's forgotten |
 | `SOLDOUT_CONFIRM_RUNS` | 2 | Runs in a row a product must read sold out before it counts (1 = old behavior) |
 | `DEEP_CHECK_BATCH` | 8 (`monitor.yml` sets 12) | Product pages deep-checked per run (watchlist + rotation) |
+| `DEEP_CHECK_ROTATE_MIN` | 2 | Rotation slots every run gets even when the watchlist fills the batch (capped at the batch; 0 = old behavior) |
+| `DISCORD_RETRY_HOURS` | 24 | How long an undelivered Discord message keeps being re-sent (0 = don't save it) |
 | `STALE_PAGE_RETRIES` | 8 | Re-fetches for a listing page served by an out-of-date FragranceNet server |
 | `BACK_ALERT_COOLDOWN_MIN` | 120 | Minimum minutes between BACK IN STOCK pings for the same product (0 = off) |
 | `BUJAIRAMI_DATA_DIR` | `local_data` (PC), repo root (Actions) | Folder for the state files and lock |

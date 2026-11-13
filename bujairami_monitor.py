@@ -104,6 +104,15 @@ CONFIG = {
     "lock_file": deep_check.data_path("bujairami.lock"),
     "lock_stale_min": 15,
 
+    # A Discord message that doesn't get through (network down, Discord 5xx,
+    # a rate limit that won't clear, a missing webhook) is saved here and re-sent
+    # at the start of every run, oldest first, for this many hours. Before this,
+    # a failed post was gone for good: state was saved anyway, so the change
+    # was never alerted again. 0 = don't save failed messages.
+    "discord_retry_hours": float(os.environ.get("DISCORD_RETRY_HOURS", "24")),
+    "pending_file": deep_check.data_path("bujairami_pending.json"),
+    "pending_max": 50,                         # oldest are dropped past this
+
     # --- Email alerts (Gmail example). Use a Gmail "App Password", not your
     #     normal password: https://myaccount.google.com/apppasswords
     #     Activates automatically once a username AND password are set (here or
@@ -596,41 +605,159 @@ def _chunks(text, limit=1900):
     return out
 
 
-def send_discord(subject, body):
-    cfg = CONFIG["discord"]
-    if not cfg.get("webhook_url"):
-        return
-    parts = _chunks(f"**{subject}**\n{body}")
-    for i, part in enumerate(parts):
-        for attempt in range(3):
+def _post_discord(content):
+    """Post one message to the webhook, with up to 3 tries. Returns:
+      "ok"    Discord accepted it
+      "retry" not delivered, worth trying again on a later run (network
+              error, rate limit, Discord 5xx, webhook missing or refused)
+      "bad"   Discord rejected the message itself (HTTP 400), so re-sending
+              the same text can't help"""
+    url = CONFIG["discord"]["webhook_url"]
+    for attempt in range(3):
+        try:
+            r = requests.post(url, json={"content": content}, timeout=20)
+        except Exception as e:
+            log(f"[error] discord failed: {e}")
+            time.sleep(2)
+            continue
+        if r.status_code == 429:          # rate limited, wait and retry
             try:
-                r = requests.post(cfg["webhook_url"], json={"content": part}, timeout=20)
-            except Exception as e:
-                log(f"[error] discord failed: {e}")
-                time.sleep(2)
-                continue
-            if r.status_code == 429:          # rate limited, wait and retry
-                try:
-                    wait = float(r.json().get("retry_after", 2))
-                except Exception:
-                    wait = 2
-                time.sleep(min(wait, 15))
-                continue
-            if r.status_code >= 400:
-                log(f"[error] discord returned HTTP {r.status_code}: {r.text[:150]}")
-            break
-        if i + 1 < len(parts):
+                wait = float(r.json().get("retry_after", 2))
+            except Exception:
+                wait = 2
+            time.sleep(min(wait, 15))
+            continue
+        if r.status_code >= 500:          # Discord's side, often brief
+            log(f"[error] discord returned HTTP {r.status_code}, retrying")
+            time.sleep(2)
+            continue
+        if r.status_code >= 400:
+            log(f"[error] discord returned HTTP {r.status_code}: {r.text[:150]}")
+            return "bad" if r.status_code == 400 else "retry"
+        return "ok"
+    return "retry"
+
+
+def send_discord(subject, body):
+    """Send an alert, split into Discord-sized messages. Returns the messages
+    that didn't get through and are worth re-sending later (empty when all
+    were delivered, or when Discord isn't set up)."""
+    if not CONFIG["discord"].get("webhook_url"):
+        return []
+    parts = _chunks(f"**{subject}**\n{body}")
+    rejected = 0
+    for i, part in enumerate(parts):
+        if i:
             time.sleep(1)
-    log(f"Discord alert sent ({len(parts)} message(s)).")
+        status = _post_discord(part)
+        if status == "retry":
+            # Discord is unreachable or refusing. Don't hammer it with the
+            # rest; hand them all back so they can go out later, in order.
+            left = parts[i:]
+            log(f"[error] Discord alert NOT delivered "
+                f"({len(left)} of {len(parts)} message(s) unsent).")
+            return left
+        if status == "bad":
+            rejected += 1
+    if rejected:
+        log(f"[error] Discord rejected {rejected} of {len(parts)} message(s); "
+            f"the rest were sent.")
+    else:
+        log(f"Discord alert sent ({len(parts)} message(s)).")
+    return []
 
 
-def notify(subject, body):
+def notify(subject, body, queue=True):
+    """queue=False skips saving undelivered Discord messages (test pings)."""
     subject = f"{subject} [{RUNNER}]"
     log(f"ALERT: {subject}")
     print(body)
     log_event(subject + "\n" + body)
     send_email(subject, body)
-    send_discord(subject, body)
+    unsent = send_discord(subject, body)
+    if unsent and queue:
+        queue_pending(subject, unsent)
+
+
+# ==========================================================================
+# Unsent Discord messages -- saved when a post fails, re-sent at the start of
+# the next run (see discord_retry_hours). Lives in pending_file.
+# ==========================================================================
+def load_pending():
+    try:
+        with open(CONFIG["pending_file"], "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return [i for i in data if isinstance(i, dict)] if isinstance(data, list) else []
+    except Exception:
+        return []  # missing or unreadable: nothing to re-send
+
+
+def save_pending(items):
+    try:
+        deep_check.write_json_atomic(CONFIG["pending_file"], items)
+    except Exception as e:
+        log(f"[warn] could not save unsent Discord messages: {e}")
+
+
+def queue_pending(subject, parts, now=None):
+    """Save messages Discord didn't take so the next run can re-send them."""
+    if CONFIG["discord_retry_hours"] <= 0:
+        return
+    now = time.time() if now is None else now
+    items = load_pending()
+    items += [{"subject": subject, "content": p, "first_tried": now} for p in parts]
+    cap = max(1, CONFIG["pending_max"])
+    if len(items) > cap:
+        log_event(f"DISCORD: unsent queue full, dropped the {len(items) - cap} "
+                  f"oldest message(s).")
+        items = items[-cap:]
+    save_pending(items)
+    log_event(f"DISCORD: not delivered, saved {len(parts)} message(s) to re-send: {subject}")
+    log(f"Saved {len(parts)} unsent Discord message(s); the next run re-sends them.")
+
+
+def flush_pending(now=None):
+    """Re-send messages an earlier run couldn't deliver, oldest first. Stops at
+    the first one that still won't go through and keeps the rest, in order.
+    Messages older than discord_retry_hours are dropped. Never raises."""
+    try:
+        if not CONFIG["discord"].get("webhook_url"):
+            return
+        items = load_pending()
+        if not items:
+            return
+        now = time.time() if now is None else now
+        max_age = CONFIG["discord_retry_hours"] * 3600
+        left, sent = [], 0
+        for item in items:
+            first = item.get("first_tried") or now
+            subject = item.get("subject", "?")
+            if now - first > max_age:
+                log_event(f"DISCORD: gave up on a message unsent for "
+                          f"{_fmt_minutes((now - first) / 60)}: {subject}")
+                continue
+            if left:              # an older one is still stuck: keep the order
+                left.append(item)
+                continue
+            if sent:
+                time.sleep(1)
+            when = datetime.fromtimestamp(first).strftime("%Y-%m-%d %H:%M")
+            status = _post_discord(f"_(delayed, first tried {when})_\n"
+                                   f"{item.get('content', '')}")
+            if status == "ok":
+                sent += 1
+            elif status == "retry":
+                left.append(item)
+            else:
+                log_event(f"DISCORD: delayed message rejected, dropped: {subject}")
+        if sent:
+            log(f"Re-sent {sent} delayed Discord message(s).")
+            log_event(f"DISCORD: re-sent {sent} delayed message(s).")
+        if left:
+            log(f"[warn] {len(left)} Discord message(s) still unsent; trying again next run.")
+        save_pending(left)
+    except Exception as e:
+        log(f"[warn] could not re-send unsent Discord messages: {e}")
 
 
 # ==========================================================================
@@ -886,6 +1013,7 @@ def run_locked(session):
         return
     try:
         migrate_root_state()
+        flush_pending()   # older unsent alerts go out before any new ones
         run_once(session)
     finally:
         release_lock()
@@ -906,7 +1034,7 @@ def main():
     if args.test_notify:
         ensure_data_dir()  # the event log lives there
         notify("Bujairami monitor test",
-               "If you can read this, your notifications are working.")
+               "If you can read this, your notifications are working.", queue=False)
         return
 
     if args.once:

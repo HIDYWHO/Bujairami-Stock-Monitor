@@ -30,6 +30,7 @@ CLEAR_ENV = (
     "DEEP_CHECK_BUDGET_SEC", "VERIFY_CACHE_MIN", "VERIFY_BUDGET_SEC",
     "MISSING_GRACE_HOURS", "SOLDOUT_CONFIRM_RUNS", "HEALTH_ALERT_AFTER_MIN",
     "STALE_PAGE_RETRIES", "BACK_ALERT_COOLDOWN_MIN", "BUJAIRAMI_ALERT_TO",
+    "DEEP_CHECK_ROTATE_MIN", "DISCORD_RETRY_HOURS",
 )
 for _name in CLEAR_ENV:
     os.environ.pop(_name, None)
@@ -244,6 +245,9 @@ class Base(unittest.TestCase):
             "event_log": os.path.join(self.data, "bujairami_events.log"),
             "health_file": os.path.join(self.data, "bujairami_health.json"),
             "lock_file": os.path.join(self.data, "bujairami.lock"),
+            "pending_file": os.path.join(self.data, "bujairami_pending.json"),
+            "discord_retry_hours": 24.0,
+            "pending_max": 50,
             "request_delay_sec": 0,
             "stale_page_retries": 8,
             "max_pages": 15,

@@ -60,6 +60,7 @@ jobs:
           [ -f bujairami_events.log ] && git add bujairami_events.log || true
           [ -f bujairami_health.json ] && git add bujairami_health.json || true
           [ -f bujairami_deep.json ] && git add bujairami_deep.json || true
+          [ -f bujairami_pending.json ] && git add bujairami_pending.json || true
           git diff --staged --quiet && exit 0
           git commit -m "update state"
           # If something else pushed in the meantime, rebase onto it and retry

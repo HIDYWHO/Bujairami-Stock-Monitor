@@ -441,13 +441,53 @@ class SelectTargetsTests(unittest.TestCase):
 
     def test_watchlist_items_come_first_and_use_up_batch_room(self):
         prods = self.products("bujairami-a", "bujairami-b", "bujairami-c", "bujairami-star")
-        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 2, "both")
+        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 2, "both", rotate_min=0)
         self.assertEqual(t, ["bujairami-star|eau de parfum", "bujairami-a|eau de parfum"])
 
     def test_watchlist_larger_than_the_batch_still_all_checked(self):
         prods = self.products("bujairami-w1", "bujairami-w2", "bujairami-x")
-        t, cur = deep_check.select_targets(list(prods), prods, ["w1", "w2"], "", 1, "both")
+        t, cur = deep_check.select_targets(list(prods), prods, ["w1", "w2"], "", 1, "both",
+                                           rotate_min=0)
         self.assertEqual(t, ["bujairami-w1|eau de parfum", "bujairami-w2|eau de parfum"])
+
+    def test_rotation_keeps_its_minimum_when_the_watchlist_fills_the_batch(self):
+        # 2026-11-13: 12 sold-out watchlist items vs a batch of 8 left the
+        # rotation with no room at all.
+        prods = self.products("bujairami-w1", "bujairami-w2", "bujairami-w3",
+                              "bujairami-x", "bujairami-y", "bujairami-z")
+        k = {s: "bujairami-%s|eau de parfum" % s for s in ("w1", "w2", "w3", "x", "y", "z")}
+        t, cur = deep_check.select_targets(list(prods), prods, ["w1", "w2", "w3"], "", 2,
+                                           "both", rotate_min=2)
+        self.assertEqual(t, [k["w1"], k["w2"], k["w3"], k["x"], k["y"]])
+        self.assertEqual(cur, k["y"])
+        t, cur = deep_check.select_targets(list(prods), prods, ["w1", "w2", "w3"], cur, 2,
+                                           "both", rotate_min=2)
+        self.assertEqual(t[3:], [k["z"], k["x"]])    # keeps going round
+
+    def test_rotation_minimum_never_shrinks_a_bigger_room(self):
+        prods = self.products("bujairami-a", "bujairami-b", "bujairami-c", "bujairami-d",
+                              "bujairami-star")
+        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 4, "both",
+                                         rotate_min=1)
+        self.assertEqual(len(t), 4)                   # star + 3 from the rotation
+
+    def test_rotation_minimum_only_applies_to_both_mode(self):
+        prods = self.products("bujairami-a", "bujairami-b", "bujairami-star")
+        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 1, "rotate",
+                                         rotate_min=3)
+        self.assertEqual(len(t), 1)
+        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 1, "watchlist",
+                                         rotate_min=3)
+        self.assertEqual(t, ["bujairami-star|eau de parfum"])
+
+    def test_rotation_minimum_is_capped_at_the_batch(self):
+        prods = self.products("bujairami-a", "bujairami-b", "bujairami-c", "bujairami-star")
+        t, _ = deep_check.select_targets(list(prods), prods, ["star"], "", 1, "both",
+                                         rotate_min=5)
+        self.assertEqual(t, ["bujairami-star|eau de parfum", "bujairami-a|eau de parfum"])
+
+    def test_default_rotation_minimum_is_two(self):
+        self.assertEqual(deep_check.DEEP_ROTATE_MIN, 2)
 
     def test_watchlist_mode_checks_only_watchlist_and_keeps_the_cursor(self):
         prods = self.products("bujairami-a", "bujairami-star")
@@ -714,6 +754,30 @@ class RunDeepChecksTests(Base):
         self.assertEqual(restocked, [])
         self.assertEqual(s.calls, [purl("bujairami-a")])
         self.assertEqual(deep_check.load_deep()["cursor"], self.key("bujairami-a"))
+
+    def test_rotation_still_runs_when_the_watchlist_fills_the_batch(self):
+        prods = self.listing("bujairami-w1", "bujairami-w2", "bujairami-a", "bujairami-b")
+        s = self.routes(w1="out", w2="out", a="in", b="out")
+        restocked, _ = deep_check.run_deep_checks(s, prods, ["w1", "w2"], batch=2, mode="both",
+                                                  log=self.logs.append, rotate_min=1)
+        self.assertEqual(s.calls, [purl("bujairami-w1"), purl("bujairami-w2"), purl("bujairami-a")])
+        self.assertEqual([p["slug"] for p in restocked], ["bujairami-a"])
+        self.assertEqual(deep_check.load_deep()["cursor"], self.key("bujairami-a"))
+
+    def test_budget_used_up_on_the_watchlist_keeps_the_rotation_cursor(self):
+        ka = self.key("bujairami-a")
+        self.write(self.deep_path, json.dumps({"cursor": ka, "items": {}}))
+        prods = self.listing("bujairami-a", "bujairami-b", "bujairami-c", "bujairami-star")
+
+        def check(session, url, retries=None):
+            deep_check.BUDGET_SEC = -1          # the watchlist item uses up the budget
+            return False, "sold out", 200
+
+        with mock.patch.object(deep_check, "BUDGET_SEC", 180), \
+                mock.patch.object(deep_check, "check_product", side_effect=check) as cp:
+            self.run_deep(prods, FakeSession(), patterns=["star"], batch=2)
+        self.assertEqual(cp.call_count, 1)                          # only the watchlist item
+        self.assertEqual(deep_check.load_deep()["cursor"], ka)      # b and c weren't skipped
 
     def test_watchlist_mode_only_checks_watchlist_products(self):
         prods = self.listing("bujairami-a", "bujairami-star")
